@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:ecommerce_desktop/model/user.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/providers/logged_product_provider.dart';
 import 'package:ecommerce_desktop/providers/product_provider.dart';
@@ -5,6 +7,7 @@ import 'package:ecommerce_desktop/providers/product_type_provider.dart';
 import 'package:ecommerce_desktop/providers/unit_of_measure_provider.dart';
 import 'package:ecommerce_desktop/screens/dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 void main() {
@@ -73,30 +76,116 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () async {
-                    AuthProvider.username = usernameController.text;
-                    AuthProvider.password = passwordController.text;
-                    try {
-                      print(
-                          "Username: ${AuthProvider.username}, Password: ${AuthProvider.password}");
-                     
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Dashboard()));
-                    } on Exception catch (e) {
+                    final username = usernameController.text.trim();
+                    final password = passwordController.text.trim();
+                    
+                    if (username.isEmpty || password.isEmpty) {
                       showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Error"),
+                          content: const Text("Please enter both username and password"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("OK")
+                            )
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    try {
+                      // Prepare login request
+                      final baseUrl = const String.fromEnvironment(
+                        "baseUrl",
+                        defaultValue: "http://localhost:5121/api/"
+                      );
+                      final url = Uri.parse("${baseUrl}users/login");
+                      
+                      final requestBody = jsonEncode({
+                        'username': username,
+                        'password': password,
+                      });
+                      
+                      final response = await http.post(
+                        url,
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: requestBody,
+                      );
+                      
+                      if (response.statusCode == 200) {
+                        // Login successful
+                        final userData = jsonDecode(response.body);
+                        final user = User.fromJson(userData);
+                        
+                        // Store credentials for future API calls
+                        AuthProvider.username = username;
+                        AuthProvider.password = password;
+                        
+                        // Navigate to dashboard
+                        if (context.mounted) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const Dashboard()
+                            )
+                          );
+                        }
+                      } else if (response.statusCode == 401) {
+                        // Invalid credentials
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Login Failed"),
+                              content: const Text("Invalid username or password"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text("OK")
+                                )
+                              ],
+                            ),
+                          );
+                        }
+                      } else {
+                        // Other error
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Error"),
+                              content: Text("Login failed: ${response.statusCode}"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text("OK")
+                                )
+                              ],
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                                title: Text("Error"),
-                                content: Text(e.toString()),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("OK"))
-                                ],
-                              ));
-                    } catch (e) {
-                      print(e);
+                            title: const Text("Error"),
+                            content: Text("An error occurred: ${e.toString()}"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("OK")
+                              )
+                            ],
+                          ),
+                        );
+                      }
                     }
                   },
                   child: const Text('Login'),

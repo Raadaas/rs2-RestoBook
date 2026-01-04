@@ -2,6 +2,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -66,9 +67,14 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<UserResponse>> Login(UserLoginRequest request)
         {
             var user = await _userService.AuthenticateAsync(request);
+            
+            if (user == null)
+                return Unauthorized("Invalid username or password");
+            
             return Ok(user);
         }
     }

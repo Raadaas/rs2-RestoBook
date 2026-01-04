@@ -11,6 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
+builder.Services.AddTransient<ICityService, CityService>();
+builder.Services.AddTransient<ICuisineTypeService, CuisineTypeService>();
+builder.Services.AddTransient<IRestaurantService, RestaurantService>();
+builder.Services.AddTransient<ITableService, TableService>();
+builder.Services.AddTransient<IMenuItemService, MenuItemService>();
+builder.Services.AddTransient<ISpecialOfferService, SpecialOfferService>();
+builder.Services.AddTransient<IReservationService, ReservationService>();
+builder.Services.AddTransient<IReservationHistoryService, ReservationHistoryService>();
+builder.Services.AddTransient<IReviewService, ReviewService>();
+builder.Services.AddTransient<IRestaurantWorkingHoursService, RestaurantWorkingHoursService>();
+builder.Services.AddTransient<IRestaurantStatisticService, RestaurantStatisticService>();
 
 builder.Services.AddMapster();
 // Configure database
