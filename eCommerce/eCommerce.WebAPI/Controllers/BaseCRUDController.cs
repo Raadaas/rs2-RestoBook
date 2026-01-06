@@ -26,13 +26,13 @@ namespace eCommerce.WebAPI.Controllers
             return await _crudService.CreateAsync(request);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public virtual async Task<T?> Update(int id, [FromBody] TUpdate request)
         {
             return await _crudService.UpdateAsync(id, request);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public virtual async Task<bool> Delete(int id)
         {
             return await _crudService.DeleteAsync(id);

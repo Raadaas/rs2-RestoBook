@@ -15,7 +15,6 @@ namespace eCommerce.Services.Database
         public DbSet<CuisineType> CuisineTypes { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<UserPreference> UserPreferences { get; set; }
-        public DbSet<RestaurantWorkingHours> RestaurantWorkingHours { get; set; }
         public DbSet<RestaurantGallery> RestaurantGalleries { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<SpecialOffer> SpecialOffers { get; set; }
@@ -124,13 +123,6 @@ namespace eCommerce.Services.Database
                 .WithMany(ct => ct.UserPreferences)
                 .HasForeignKey(up => up.CuisineTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
-                
-            // Configure RestaurantWorkingHours relationship
-            modelBuilder.Entity<RestaurantWorkingHours>()
-                .HasOne(rwh => rwh.Restaurant)
-                .WithMany(r => r.WorkingHours)
-                .HasForeignKey(rwh => rwh.RestaurantId)
-                .OnDelete(DeleteBehavior.Cascade);
                 
             // Configure RestaurantGallery relationship
             modelBuilder.Entity<RestaurantGallery>()

@@ -24,6 +24,8 @@ namespace eCommerce.Model.Responses
         public bool HasParking { get; set; }
         public bool HasTerrace { get; set; }
         public bool IsKidFriendly { get; set; }
+        public TimeSpan OpenTime { get; set; }
+        public TimeSpan CloseTime { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
     }

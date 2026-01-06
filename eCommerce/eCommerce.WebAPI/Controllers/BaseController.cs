@@ -26,7 +26,7 @@ namespace eCommerce.WebAPI.Controllers
             return await _service.GetAsync(search ?? new TSearch());
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public virtual async Task<T?> GetById(int id)
         {
             return await _service.GetByIdAsync(id);

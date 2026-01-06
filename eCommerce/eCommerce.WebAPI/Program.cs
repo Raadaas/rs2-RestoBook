@@ -1,10 +1,12 @@
 using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.WebAPI.Filters;
+using eCommerce.WebAPI.Converters;
 using Mapster;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +22,6 @@ builder.Services.AddTransient<ISpecialOfferService, SpecialOfferService>();
 builder.Services.AddTransient<IReservationService, ReservationService>();
 builder.Services.AddTransient<IReservationHistoryService, ReservationHistoryService>();
 builder.Services.AddTransient<IReviewService, ReviewService>();
-builder.Services.AddTransient<IRestaurantWorkingHoursService, RestaurantWorkingHoursService>();
 builder.Services.AddTransient<IRestaurantStatisticService, RestaurantStatisticService>();
 
 builder.Services.AddMapster();
@@ -31,11 +32,15 @@ builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
 
-builder.Services.AddControllers( x=> 
+builder.Services.AddControllers(x =>
     {
         x.Filters.Add<ExceptionFilter>();
-    }
-);
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new TimeSpanConverter());
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -76,6 +81,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

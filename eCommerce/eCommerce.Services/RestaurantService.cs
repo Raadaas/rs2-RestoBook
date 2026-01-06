@@ -122,6 +122,8 @@ namespace eCommerce.Services
                 HasParking = entity.HasParking,
                 HasTerrace = entity.HasTerrace,
                 IsKidFriendly = entity.IsKidFriendly,
+                OpenTime = entity.OpenTime,
+                CloseTime = entity.CloseTime,
                 CreatedAt = entity.CreatedAt,
                 IsActive = entity.IsActive
             };

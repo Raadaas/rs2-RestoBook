@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -46,6 +47,12 @@ namespace eCommerce.Model.Requests
         public bool HasTerrace { get; set; } = false;
         
         public bool IsKidFriendly { get; set; } = false;
+        
+        [Required]
+        public TimeSpan OpenTime { get; set; }
+        
+        [Required]
+        public TimeSpan CloseTime { get; set; }
         
         public bool IsActive { get; set; } = true;
     }

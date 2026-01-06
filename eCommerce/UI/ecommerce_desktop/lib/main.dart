@@ -1,24 +1,12 @@
 import 'dart:convert';
 import 'package:ecommerce_desktop/model/user.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
-import 'package:ecommerce_desktop/providers/logged_product_provider.dart';
-import 'package:ecommerce_desktop/providers/product_provider.dart';
-import 'package:ecommerce_desktop/providers/product_type_provider.dart';
-import 'package:ecommerce_desktop/providers/unit_of_measure_provider.dart';
-import 'package:ecommerce_desktop/screens/dashboard.dart';
+import 'package:ecommerce_desktop/screens/restaurant_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MultiProvider(providers: [
-    ChangeNotifierProvider<ProductProvider>(
-        create: (context) => ProductProvider()),
-    ChangeNotifierProvider<UnitOfMeasureProvider>(
-        create: (context) => UnitOfMeasureProvider()),
-    ChangeNotifierProvider<ProductTypeProvider>(
-        create: (context) => ProductTypeProvider()),
-  ], child: const MyLoginApp()));
+  runApp(const MyLoginApp());
 }
 
 class MyLoginApp extends StatelessWidget {
@@ -125,13 +113,14 @@ class LoginScreen extends StatelessWidget {
                         // Store credentials for future API calls
                         AuthProvider.username = username;
                         AuthProvider.password = password;
+                        AuthProvider.userId = user.id;
                         
-                        // Navigate to dashboard
+                        // Navigate to restaurant selection
                         if (context.mounted) {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const Dashboard()
+                              builder: (context) => RestaurantSelectionScreen(user: user)
                             )
                           );
                         }

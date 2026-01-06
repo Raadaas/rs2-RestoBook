@@ -13,6 +13,7 @@ namespace eCommerce.Model.Responses
         public string TableNumber { get; set; } = string.Empty;
         public DateTime ReservationDate { get; set; }
         public TimeSpan ReservationTime { get; set; }
+        public TimeSpan Duration { get; set; }
         public int NumberOfGuests { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? SpecialRequests { get; set; }

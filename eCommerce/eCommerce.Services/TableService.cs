@@ -4,6 +4,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -94,6 +95,73 @@ namespace eCommerce.Services
                 return null;
                 
             return MapToResponse(entity);
+        }
+
+        public async Task<object> GetOccupancyAsync(int? restaurantId = null)
+        {
+            var query = _context.Tables.Where(t => t.IsActive);
+            
+            if (restaurantId.HasValue)
+            {
+                query = query.Where(t => t.RestaurantId == restaurantId.Value);
+            }
+            
+            var total = await query.CountAsync();
+            
+            // Count occupied tables (tables with currently active reservations)
+            // Use local time since reservations are stored with local date/time
+            var now = DateTime.Now; // Use local time instead of UTC
+            var today = now.Date;
+            var tomorrow = today.AddDays(1);
+            
+            // Get all reservations for today that are not cancelled
+            var allReservations = await _context.Reservations
+                .Where(r => r.ReservationDate >= today && 
+                           r.ReservationDate < tomorrow &&
+                           (r.Status == "Confirmed" || r.Status == "Pending") &&
+                           r.CancelledAt == null)
+                .ToListAsync();
+            
+            if (restaurantId.HasValue)
+            {
+                allReservations = allReservations.Where(r => r.RestaurantId == restaurantId.Value).ToList();
+            }
+            
+            // Filter to only currently active reservations (now is within reservation time window)
+            // ReservationDate is stored as date only, ReservationTime is TimeSpan
+            // We combine them to get full DateTime and compare with current local time
+            var currentlyActiveReservations = allReservations.Where(r =>
+            {
+                // Combine reservation date and time to get full DateTime (in local time)
+                var reservationStart = r.ReservationDate.Date.Add(r.ReservationTime);
+                var reservationEnd = reservationStart.Add(r.Duration);
+                
+                // Compare with current local time
+                return now >= reservationStart && now < reservationEnd;
+            }).ToList();
+            
+            // Get distinct table IDs that are currently occupied
+            var occupiedTableIds = currentlyActiveReservations
+                .Select(r => r.TableId)
+                .Distinct()
+                .ToList();
+            
+            // Filter occupied tables by restaurant if needed
+            if (restaurantId.HasValue)
+            {
+                var restaurantTableIds = await query.Select(t => t.Id).ToListAsync();
+                occupiedTableIds = occupiedTableIds.Where(id => restaurantTableIds.Contains(id)).ToList();
+            }
+            
+            var occupied = occupiedTableIds.Count;
+            var percentage = total > 0 ? (double)occupied / total * 100 : 0.0;
+
+            return new
+            {
+                occupied = occupied,
+                total = total,
+                percentage = Math.Round(percentage, 2)
+            };
         }
     }
 }

@@ -63,6 +63,10 @@ namespace eCommerce.Services.Database
         
         public bool IsKidFriendly { get; set; } = false;
         
+        public TimeSpan OpenTime { get; set; }
+        
+        public TimeSpan CloseTime { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public bool IsActive { get; set; } = true;
@@ -70,7 +74,6 @@ namespace eCommerce.Services.Database
         // Navigation properties
         public ICollection<Table> Tables { get; set; } = new List<Table>();
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-        public ICollection<RestaurantWorkingHours> WorkingHours { get; set; } = new List<RestaurantWorkingHours>();
         public ICollection<RestaurantGallery> Gallery { get; set; } = new List<RestaurantGallery>();
         public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
         public ICollection<SpecialOffer> SpecialOffers { get; set; } = new List<SpecialOffer>();

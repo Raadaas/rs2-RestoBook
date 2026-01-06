@@ -21,6 +21,9 @@ namespace eCommerce.Model.Requests
         public TimeSpan ReservationTime { get; set; }
         
         [Required]
+        public TimeSpan Duration { get; set; } = TimeSpan.FromHours(2); // Default 2 hours
+        
+        [Required]
         public int NumberOfGuests { get; set; }
         
         [MaxLength(20)]

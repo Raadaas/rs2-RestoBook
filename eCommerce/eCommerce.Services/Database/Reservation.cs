@@ -29,6 +29,8 @@ namespace eCommerce.Services.Database
         
         public TimeSpan ReservationTime { get; set; }
         
+        public TimeSpan Duration { get; set; } = TimeSpan.FromHours(2); // Default 2 hours
+        
         public int NumberOfGuests { get; set; }
         
         [MaxLength(20)]
