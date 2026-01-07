@@ -1,8 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'table_model.g.dart';
-
-@JsonSerializable()
 class Table {
   final int id;
   final int restaurantId;
@@ -28,7 +23,34 @@ class Table {
     required this.status,
   });
 
-  factory Table.fromJson(Map<String, dynamic> json) => _$TableFromJson(json);
-  Map<String, dynamic> toJson() => _$TableToJson(this);
+  factory Table.fromJson(Map<String, dynamic> json) {
+    return Table(
+      id: json['id'] ?? 0,
+      restaurantId: json['restaurantId'] ?? 0,
+      restaurantName: json['restaurantName'] ?? '',
+      tableNumber: json['tableNumber'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      positionX: json['positionX'] != null ? (json['positionX'] as num).toDouble() : null,
+      positionY: json['positionY'] != null ? (json['positionY'] as num).toDouble() : null,
+      tableType: json['tableType'],
+      isActive: json['isActive'] ?? true,
+      status: json['status'] ?? 'available',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'restaurantId': restaurantId,
+      'restaurantName': restaurantName,
+      'tableNumber': tableNumber,
+      'capacity': capacity,
+      'positionX': positionX,
+      'positionY': positionY,
+      'tableType': tableType,
+      'isActive': isActive,
+      'status': status,
+    };
+  }
 }
 

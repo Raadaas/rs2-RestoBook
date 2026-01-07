@@ -19,6 +19,8 @@ class Restaurant {
   final bool hasParking;
   final bool hasTerrace;
   final bool isKidFriendly;
+  final String openTime; // Format: "HH:mm:ss"
+  final String closeTime; // Format: "HH:mm:ss"
   final DateTime createdAt;
   final bool isActive;
 
@@ -43,6 +45,8 @@ class Restaurant {
     required this.hasParking,
     required this.hasTerrace,
     required this.isKidFriendly,
+    required this.openTime,
+    required this.closeTime,
     required this.createdAt,
     required this.isActive,
   });
@@ -69,6 +73,8 @@ class Restaurant {
       hasParking: json['hasParking'] ?? false,
       hasTerrace: json['hasTerrace'] ?? false,
       isKidFriendly: json['isKidFriendly'] ?? false,
+      openTime: json['openTime'] ?? '09:00:00',
+      closeTime: json['closeTime'] ?? '22:00:00',
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       isActive: json['isActive'] ?? true,
     );
@@ -96,6 +102,8 @@ class Restaurant {
       'hasParking': hasParking,
       'hasTerrace': hasTerrace,
       'isKidFriendly': isKidFriendly,
+      'openTime': openTime,
+      'closeTime': closeTime,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
     };
