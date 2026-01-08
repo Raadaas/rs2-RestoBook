@@ -145,12 +145,17 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(so => so.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
                 
-            // Configure Table relationship
+            // Configure Table relationships
             modelBuilder.Entity<Table>()
                 .HasOne(t => t.Restaurant)
                 .WithMany(r => r.Tables)
                 .HasForeignKey(t => t.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            // Configure TableType as enum (stored as int in database)
+            modelBuilder.Entity<Table>()
+                .Property(t => t.TableType)
+                .HasConversion<int?>();
                 
             // Configure Reservation relationships
             modelBuilder.Entity<Reservation>()

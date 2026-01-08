@@ -4,11 +4,11 @@ class Table {
   final String restaurantName;
   final String tableNumber;
   final int capacity;
-  final double? positionX;
-  final double? positionY;
-  final String? tableType;
-  final bool isActive;
-  final String status; // available, occupied, reserved
+          final double? positionX;
+          final double? positionY;
+          final String? tableType; // Circle, Square, Rectangle
+          final bool isActive;
+          final String status; // available, occupied, reserved
 
   Table({
     required this.id,
@@ -16,11 +16,11 @@ class Table {
     required this.restaurantName,
     required this.tableNumber,
     required this.capacity,
-    this.positionX,
-    this.positionY,
-    this.tableType,
-    required this.isActive,
-    required this.status,
+            this.positionX,
+            this.positionY,
+            this.tableType,
+            required this.isActive,
+            required this.status,
   });
 
   factory Table.fromJson(Map<String, dynamic> json) {
@@ -32,7 +32,7 @@ class Table {
       capacity: json['capacity'] ?? 0,
       positionX: json['positionX'] != null ? (json['positionX'] as num).toDouble() : null,
       positionY: json['positionY'] != null ? (json['positionY'] as num).toDouble() : null,
-      tableType: json['tableType'],
+      tableType: json['tableType'] != null ? json['tableType'].toString() : null,
       isActive: json['isActive'] ?? true,
       status: json['status'] ?? 'available',
     );
@@ -45,11 +45,11 @@ class Table {
       'restaurantName': restaurantName,
       'tableNumber': tableNumber,
       'capacity': capacity,
-      'positionX': positionX,
-      'positionY': positionY,
-      'tableType': tableType,
-      'isActive': isActive,
-      'status': status,
+              'positionX': positionX,
+              'positionY': positionY,
+              'tableType': tableType,
+              'isActive': isActive,
+              'status': status,
     };
   }
 }

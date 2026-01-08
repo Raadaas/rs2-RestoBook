@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using eCommerce.Model;
 
 namespace eCommerce.Services
 {
@@ -53,15 +54,19 @@ namespace eCommerce.Services
                 query = query.Where(t => t.Capacity == search.Capacity.Value);
             }
 
-            if (!string.IsNullOrEmpty(search.TableType))
+            if (search.TableType.HasValue)
             {
-                query = query.Where(t => t.TableType != null && t.TableType.Contains(search.TableType));
+                query = query.Where(t => t.TableType == search.TableType.Value);
             }
 
             if (search.IsActive.HasValue)
             {
                 query = query.Where(t => t.IsActive == search.IsActive.Value);
             }
+            
+            // CRITICAL FIX: Add OrderBy to ensure consistent ordering (newest first)
+            // This ensures newly created tables (higher IDs) appear first
+            query = query.OrderByDescending(t => t.Id);
 
             return query;
         }
@@ -70,6 +75,13 @@ namespace eCommerce.Services
         {
             if (entity == null)
                 return null!;
+                
+            // Safely handle TableType enum - it might be null or invalid for old records
+            TableType? tableType = null;
+            if (entity.TableType.HasValue && Enum.IsDefined(typeof(TableType), entity.TableType.Value))
+            {
+                tableType = entity.TableType.Value;
+            }
                 
             return new TableResponse
             {
@@ -80,7 +92,7 @@ namespace eCommerce.Services
                 Capacity = entity.Capacity,
                 PositionX = entity.PositionX,
                 PositionY = entity.PositionY,
-                TableType = entity.TableType,
+                TableType = tableType,
                 IsActive = entity.IsActive
             };
         }

@@ -1,3 +1,5 @@
+using eCommerce.Model;
+
 namespace eCommerce.Model.Responses
 {
     public class TableResponse
@@ -9,7 +11,7 @@ namespace eCommerce.Model.Responses
         public int Capacity { get; set; }
         public decimal? PositionX { get; set; }
         public decimal? PositionY { get; set; }
-        public string? TableType { get; set; }
+        public TableType? TableType { get; set; }
         public bool IsActive { get; set; }
     }
 }
