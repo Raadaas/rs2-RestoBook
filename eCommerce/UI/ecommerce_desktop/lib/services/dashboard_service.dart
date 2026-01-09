@@ -72,5 +72,59 @@ class DashboardService {
       throw Exception("Failed to load hourly occupancy: ${response.statusCode} - ${response.body}");
     }
   }
+
+  static Future<List<TableUsageData>> getTopTables(int restaurantId, {int count = 3, bool leastUsed = false}) async {
+    final url = Uri.parse("${baseUrl}analytics/top-tables?restaurantId=$restaurantId&topCount=$count&leastUsed=$leastUsed");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((e) => TableUsageData.fromJson(e)).toList();
+      }
+      return [];
+    } else {
+      throw Exception("Failed to load top tables: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<ReservationsSummary> getReservationsSummary(int restaurantId) async {
+    final url = Uri.parse("${baseUrl}analytics/reservations-summary?restaurantId=$restaurantId");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ReservationsSummary.fromJson(data);
+    } else {
+      throw Exception("Failed to load reservations summary: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<AverageRating> getAverageRating(int restaurantId) async {
+    final url = Uri.parse("${baseUrl}analytics/average-rating?restaurantId=$restaurantId");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return AverageRating.fromJson(data);
+    } else {
+      throw Exception("Failed to load average rating: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<List<WeeklyOccupancyData>> getWeeklyOccupancy(int restaurantId) async {
+    final url = Uri.parse("${baseUrl}analytics/weekly-occupancy?restaurantId=$restaurantId");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((e) => WeeklyOccupancyData.fromJson(e)).toList();
+      }
+      return [];
+    } else {
+      throw Exception("Failed to load weekly occupancy: ${response.statusCode} - ${response.body}");
+    }
+  }
 }
 

@@ -58,3 +58,89 @@ class HourlyData {
   }
 }
 
+class TableUsageData {
+  final int tableId;
+  final String tableNumber;
+  final int capacity;
+  final int reservationCount;
+
+  TableUsageData({
+    required this.tableId,
+    required this.tableNumber,
+    required this.capacity,
+    required this.reservationCount,
+  });
+
+  factory TableUsageData.fromJson(Map<String, dynamic> json) {
+    return TableUsageData(
+      tableId: json['tableId'] ?? 0,
+      tableNumber: json['tableNumber'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      reservationCount: json['reservationCount'] ?? 0,
+    );
+  }
+}
+
+class ReservationsSummary {
+  final int total;
+  final int confirmed;
+  final int completed;
+  final int cancelled;
+  final double trend;
+
+  ReservationsSummary({
+    required this.total,
+    required this.confirmed,
+    required this.completed,
+    required this.cancelled,
+    required this.trend,
+  });
+
+  factory ReservationsSummary.fromJson(Map<String, dynamic> json) {
+    return ReservationsSummary(
+      total: json['total'] ?? 0,
+      confirmed: json['confirmed'] ?? 0,
+      completed: json['completed'] ?? 0,
+      cancelled: json['cancelled'] ?? 0,
+      trend: (json['trend'] ?? 0.0).toDouble(),
+    );
+  }
+}
+
+class AverageRating {
+  final double averageRating;
+  final int totalReviews;
+  final double trend;
+
+  AverageRating({
+    required this.averageRating,
+    required this.totalReviews,
+    required this.trend,
+  });
+
+  factory AverageRating.fromJson(Map<String, dynamic> json) {
+    return AverageRating(
+      averageRating: (json['averageRating'] ?? 0.0).toDouble(),
+      totalReviews: json['totalReviews'] ?? 0,
+      trend: (json['trend'] ?? 0.0).toDouble(),
+    );
+  }
+}
+
+class WeeklyOccupancyData {
+  final String day;
+  final int reservationCount;
+
+  WeeklyOccupancyData({
+    required this.day,
+    required this.reservationCount,
+  });
+
+  factory WeeklyOccupancyData.fromJson(Map<String, dynamic> json) {
+    return WeeklyOccupancyData(
+      day: json['day'] ?? '',
+      reservationCount: json['reservationCount'] ?? 0,
+    );
+  }
+}
+
