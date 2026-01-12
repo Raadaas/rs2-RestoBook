@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using eCommerce.Model;
 
 namespace eCommerce.Services.Database
 {
@@ -24,17 +25,10 @@ namespace eCommerce.Services.Database
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; }
         
-        [MaxLength(50)]
-        public string? Category { get; set; }
+        public MenuCategory? Category { get; set; }
         
-        public bool IsVegetarian { get; set; } = false;
+        public Allergen Allergens { get; set; } = Allergen.None;
         
-        public bool IsVegan { get; set; } = false;
-        
-        [MaxLength(200)]
-        public string? Allergens { get; set; }
-        
-        [MaxLength(500)]
         public string? ImageUrl { get; set; }
         
         public bool IsAvailable { get; set; } = true;

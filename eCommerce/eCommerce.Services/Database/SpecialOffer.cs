@@ -22,7 +22,7 @@ namespace eCommerce.Services.Database
         public string? Description { get; set; }
         
         [Column(TypeName = "decimal(5,2)")]
-        public decimal DiscountPercentage { get; set; }
+        public decimal Price { get; set; }
         
         public DateTime ValidFrom { get; set; }
         

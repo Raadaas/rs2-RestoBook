@@ -47,19 +47,9 @@ namespace eCommerce.Services
                 query = query.Where(m => m.Name.Contains(search.Name));
             }
 
-            if (!string.IsNullOrEmpty(search.Category))
+            if (search.Category.HasValue)
             {
-                query = query.Where(m => m.Category != null && m.Category.Contains(search.Category));
-            }
-
-            if (search.IsVegetarian.HasValue)
-            {
-                query = query.Where(m => m.IsVegetarian == search.IsVegetarian.Value);
-            }
-
-            if (search.IsVegan.HasValue)
-            {
-                query = query.Where(m => m.IsVegan == search.IsVegan.Value);
+                query = query.Where(m => m.Category == search.Category.Value);
             }
 
             if (search.IsAvailable.HasValue)
@@ -90,8 +80,6 @@ namespace eCommerce.Services
                 Description = entity.Description,
                 Price = entity.Price,
                 Category = entity.Category,
-                IsVegetarian = entity.IsVegetarian,
-                IsVegan = entity.IsVegan,
                 Allergens = entity.Allergens,
                 ImageUrl = entity.ImageUrl,
                 IsAvailable = entity.IsAvailable,

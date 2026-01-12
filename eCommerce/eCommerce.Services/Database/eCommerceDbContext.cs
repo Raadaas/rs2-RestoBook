@@ -138,6 +138,16 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(mi => mi.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
                 
+            // Configure MenuItem Category enum (stored as int in database)
+            modelBuilder.Entity<MenuItem>()
+                .Property(mi => mi.Category)
+                .HasConversion<int?>();
+                
+            // Configure MenuItem Allergens enum (stored as int in database)
+            modelBuilder.Entity<MenuItem>()
+                .Property(mi => mi.Allergens)
+                .HasConversion<int>();
+                
             // Configure SpecialOffer relationship
             modelBuilder.Entity<SpecialOffer>()
                 .HasOne(so => so.Restaurant)

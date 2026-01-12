@@ -34,6 +34,27 @@ namespace eCommerce.Services
             return MapToResponse(entity);
         }
 
+        public override async Task<PagedResult<SpecialOfferResponse>> GetAsync(SpecialOfferSearchObject search)
+        {
+            // Automatically deactivate expired special offers before fetching
+            var now = DateTime.UtcNow;
+            var expiredOffers = await _context.SpecialOffers
+                .Where(s => s.ValidTo < now && s.IsActive)
+                .ToListAsync();
+            
+            if (expiredOffers.Any())
+            {
+                foreach (var offer in expiredOffers)
+                {
+                    offer.IsActive = false;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            // Call base GetAsync which will apply filters and return results
+            return await base.GetAsync(search);
+        }
+
         protected override IQueryable<Database.SpecialOffer> ApplyFilter(IQueryable<Database.SpecialOffer> query, SpecialOfferSearchObject search)
         {
             query = query.Include(s => s.Restaurant);
@@ -84,7 +105,7 @@ namespace eCommerce.Services
                 RestaurantName = entity.Restaurant != null ? entity.Restaurant.Name : string.Empty,
                 Title = entity.Title,
                 Description = entity.Description,
-                DiscountPercentage = entity.DiscountPercentage,
+                Price = entity.Price,
                 ValidFrom = entity.ValidFrom,
                 ValidTo = entity.ValidTo,
                 IsActive = entity.IsActive,

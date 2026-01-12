@@ -4,9 +4,7 @@ namespace eCommerce.Model.SearchObjects
     {
         public int? RestaurantId { get; set; }
         public string? Name { get; set; }
-        public string? Category { get; set; }
-        public bool? IsVegetarian { get; set; }
-        public bool? IsVegan { get; set; }
+        public MenuCategory? Category { get; set; }
         public bool? IsAvailable { get; set; }
     }
 }
