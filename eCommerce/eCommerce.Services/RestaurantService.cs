@@ -60,11 +60,6 @@ namespace eCommerce.Services
                 query = query.Where(r => r.OwnerId == search.OwnerId.Value);
             }
 
-            if (search.PriceRange.HasValue)
-            {
-                query = query.Where(r => r.PriceRange == search.PriceRange.Value);
-            }
-
             if (search.HasParking.HasValue)
             {
                 query = query.Where(r => r.HasParking == search.HasParking.Value);
@@ -116,7 +111,6 @@ namespace eCommerce.Services
                 Email = entity.Email,
                 CuisineTypeId = entity.CuisineTypeId,
                 CuisineTypeName = entity.CuisineType != null ? entity.CuisineType.Name : string.Empty,
-                PriceRange = entity.PriceRange,
                 AverageRating = entity.AverageRating,
                 TotalReviews = entity.TotalReviews,
                 HasParking = entity.HasParking,

@@ -37,6 +37,8 @@ namespace eCommerce.Services.Database
         
         public DateTime? LastLoginAt { get; set; }
         
+        public DateTime? PasswordChangedAt { get; set; }
+        
         [Phone]
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
@@ -45,6 +47,9 @@ namespace eCommerce.Services.Database
         
         [ForeignKey("CityId")]
         public City? City { get; set; }
+        
+        [MaxLength(100000)]
+        public string? ImageUrl { get; set; }
         
         // Navigation properties
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

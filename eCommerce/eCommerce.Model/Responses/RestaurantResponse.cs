@@ -18,7 +18,6 @@ namespace eCommerce.Model.Responses
         public string? Email { get; set; }
         public int CuisineTypeId { get; set; }
         public string CuisineTypeName { get; set; } = string.Empty;
-        public int PriceRange { get; set; }
         public decimal? AverageRating { get; set; }
         public int TotalReviews { get; set; }
         public bool HasParking { get; set; }

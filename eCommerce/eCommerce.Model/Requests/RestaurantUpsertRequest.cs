@@ -40,8 +40,6 @@ namespace eCommerce.Model.Requests
         [Required]
         public int CuisineTypeId { get; set; }
         
-        public int PriceRange { get; set; }
-        
         public bool HasParking { get; set; } = false;
         
         public bool HasTerrace { get; set; } = false;

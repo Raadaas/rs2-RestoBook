@@ -52,8 +52,14 @@ namespace eCommerce.Services
 
         public async Task<UserResponse?> GetByIdAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            return user != null ? MapToResponse(user) : null;
+            try
+            {
+                return await GetUserResponseWithRolesAsync(id);
+            }
+            catch (InvalidOperationException)
+            {
+                return null; // User not found
+            }
         }
 
         private string HashPassword(string password, out byte[] salt)
@@ -90,6 +96,8 @@ namespace eCommerce.Services
                 Email = request.Email,
                 Username = request.Username,
                 PhoneNumber = request.PhoneNumber,
+                CityId = request.CityId,
+                ImageUrl = request.ImageUrl,
                 IsActive = request.IsActive,
                 CreatedAt = DateTime.UtcNow
             };
@@ -100,6 +108,7 @@ namespace eCommerce.Services
                 byte[] salt;
                 user.PasswordHash = HashPassword(request.Password, out salt);
                 user.PasswordSalt = Convert.ToBase64String(salt);
+                user.PasswordChangedAt = DateTime.UtcNow;
             }
 
             // Add user to database first to get the ID
@@ -151,14 +160,26 @@ namespace eCommerce.Services
             user.Email = request.Email;
             user.Username = request.Username;
             user.PhoneNumber = request.PhoneNumber;
+            user.CityId = request.CityId;
+            user.ImageUrl = request.ImageUrl;
             user.IsActive = request.IsActive;
 
             // Handle password if provided
             if (!string.IsNullOrEmpty(request.Password))
             {
+                // Verify current password if CurrentPassword is provided
+                if (!string.IsNullOrEmpty(request.CurrentPassword))
+                {
+                    if (!VerifyPassword(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
+                    {
+                        throw new InvalidOperationException("Current password is incorrect.");
+                    }
+                }
+                
                 byte[] salt;
                 user.PasswordHash = HashPassword(request.Password, out salt);
                 user.PasswordSalt = Convert.ToBase64String(salt);
+                user.PasswordChangedAt = DateTime.UtcNow;
             }
             
             // Update roles
@@ -210,9 +231,12 @@ namespace eCommerce.Services
                 Email = user.Email,
                 Username = user.Username,
                 PhoneNumber = user.PhoneNumber,
+                CityId = user.CityId,
+                ImageUrl = user.ImageUrl,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt
+                LastLoginAt = user.LastLoginAt,
+                PasswordChangedAt = user.PasswordChangedAt
             };
         }
 

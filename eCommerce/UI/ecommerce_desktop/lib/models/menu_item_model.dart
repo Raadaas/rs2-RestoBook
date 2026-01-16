@@ -179,5 +179,5 @@ class MenuItem {
     if (allergens.contains('lupin')) value |= 4096;
     if (allergens.contains('molluscs')) value |= 8192;
     return value;
-  }
+}
 }

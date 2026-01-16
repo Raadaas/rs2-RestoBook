@@ -13,7 +13,6 @@ class Restaurant {
   final String? email;
   final int cuisineTypeId;
   final String cuisineTypeName;
-  final int priceRange;
   final double? averageRating;
   final int totalReviews;
   final bool hasParking;
@@ -39,7 +38,6 @@ class Restaurant {
     this.email,
     required this.cuisineTypeId,
     required this.cuisineTypeName,
-    required this.priceRange,
     this.averageRating,
     required this.totalReviews,
     required this.hasParking,
@@ -67,7 +65,6 @@ class Restaurant {
       email: json['email'],
       cuisineTypeId: json['cuisineTypeId'] ?? 0,
       cuisineTypeName: json['cuisineTypeName'] ?? '',
-      priceRange: json['priceRange'] ?? 0,
       averageRating: json['averageRating'] != null ? (json['averageRating'] as num).toDouble() : null,
       totalReviews: json['totalReviews'] ?? 0,
       hasParking: json['hasParking'] ?? false,
@@ -96,7 +93,6 @@ class Restaurant {
       'email': email,
       'cuisineTypeId': cuisineTypeId,
       'cuisineTypeName': cuisineTypeName,
-      'priceRange': priceRange,
       'averageRating': averageRating,
       'totalReviews': totalReviews,
       'hasParking': hasParking,

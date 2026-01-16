@@ -295,7 +295,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
+        child: Text(
                         categoryDisplayName,
                         style: const TextStyle(
                           fontSize: 18,

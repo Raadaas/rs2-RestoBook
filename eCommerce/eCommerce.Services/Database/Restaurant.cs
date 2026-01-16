@@ -50,8 +50,6 @@ namespace eCommerce.Services.Database
         [ForeignKey("CuisineTypeId")]
         public CuisineType CuisineType { get; set; } = null!;
         
-        public int PriceRange { get; set; }
-        
         [Column(TypeName = "decimal(3,2)")]
         public decimal? AverageRating { get; set; }
         

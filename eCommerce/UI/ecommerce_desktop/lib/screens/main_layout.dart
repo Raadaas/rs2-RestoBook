@@ -4,6 +4,12 @@ import 'package:ecommerce_desktop/screens/calendar_screen.dart';
 import 'package:ecommerce_desktop/screens/table_layout_screen.dart';
 import 'package:ecommerce_desktop/screens/reports_screen.dart';
 import 'package:ecommerce_desktop/screens/menu_screen.dart';
+import 'package:ecommerce_desktop/screens/profile_details_screen.dart';
+import 'package:ecommerce_desktop/models/restaurant_model.dart';
+import 'package:ecommerce_desktop/model/user.dart';
+import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
+import 'package:ecommerce_desktop/providers/user_provider.dart';
+import 'package:ecommerce_desktop/providers/auth_provider.dart';
 
 class MainLayout extends StatefulWidget {
   final int restaurantId;
@@ -19,6 +25,40 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+  bool _showProfile = false;
+  Restaurant? _restaurant;
+  User? _user;
+  bool _isLoading = true;
+  
+  final RestaurantProvider _restaurantProvider = RestaurantProvider();
+  final UserProvider _userProvider = UserProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final restaurant = await _restaurantProvider.getById(widget.restaurantId);
+      User? user;
+      if (AuthProvider.userId != null) {
+        user = await _userProvider.getById(AuthProvider.userId!);
+      }
+      
+      setState(() {
+        _restaurant = restaurant;
+        _user = user;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      debugPrint('Error loading data: $e');
+    }
+  }
 
   List<Widget> get _screens => [
     DashboardScreen(restaurantId: widget.restaurantId),
@@ -27,6 +67,17 @@ class _MainLayoutState extends State<MainLayout> {
     ReportsScreen(restaurantId: widget.restaurantId),
     MenuScreen(restaurantId: widget.restaurantId),
   ];
+
+  Widget get _currentScreen {
+    if (_showProfile && _restaurant != null && _user != null) {
+      return ProfileDetailsScreen(
+        user: _user!,
+        restaurant: _restaurant!,
+        onUpdate: _loadData,
+      );
+    }
+    return _screens[_selectedIndex];
+  }
 
   final List<NavigationItem> _navigationItems = [
     NavigationItem(
@@ -115,7 +166,7 @@ class _MainLayoutState extends State<MainLayout> {
           ),
           // Main Content
           Expanded(
-            child: _screens[_selectedIndex],
+            child: _currentScreen,
           ),
         ],
       ),
@@ -124,7 +175,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildNavItem(int index) {
     final item = _navigationItems[index];
-    final isSelected = _selectedIndex == index;
+    final isSelected = _selectedIndex == index && !_showProfile;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -136,6 +187,7 @@ class _MainLayoutState extends State<MainLayout> {
         onTap: () {
           setState(() {
             _selectedIndex = index;
+            _showProfile = false;
           });
         },
         borderRadius: BorderRadius.circular(8),
@@ -165,12 +217,24 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildProfileSection() {
-    return Container(
+    final isProfileSelected = _showProfile;
+    
+    return InkWell(
+      onTap: () {
+        if (_restaurant != null && _user != null) {
+          setState(() {
+            _showProfile = true;
+          });
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+          color: isProfileSelected ? const Color(0xFF8B7355).withOpacity(0.1) : Colors.white,
         borderRadius: BorderRadius.circular(8),
+          border: isProfileSelected ? Border.all(color: const Color(0xFF8B7355), width: 2) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -199,9 +263,11 @@ class _MainLayoutState extends State<MainLayout> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Restaurant Name',
-                  style: TextStyle(
+                  Text(
+                    _isLoading
+                        ? 'Loading...'
+                        : (_restaurant?.name ?? 'Restaurant Name'),
+                    style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF4A4A4A),
@@ -209,7 +275,11 @@ class _MainLayoutState extends State<MainLayout> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Manager',
+                    _isLoading
+                        ? 'Loading...'
+                        : (_user != null
+                            ? '${_user!.firstName} ${_user!.lastName}'
+                            : 'Manager'),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -219,6 +289,7 @@ class _MainLayoutState extends State<MainLayout> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
