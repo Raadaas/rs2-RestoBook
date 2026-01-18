@@ -25,6 +25,9 @@ namespace eCommerce.Services
 
             await _context.SaveChangesAsync();
             
+            // Update restaurant average rating after creating review
+            await UpdateRestaurantRating(entity.RestaurantId);
+            
             // Reload entity with navigation properties
             entity = await _context.Reviews
                 .Include(r => r.Reservation)
@@ -33,6 +36,79 @@ namespace eCommerce.Services
                 .FirstOrDefaultAsync(r => r.Id == entity.Id);
             
             return MapToResponse(entity);
+        }
+
+        public override async Task<ReviewResponse?> UpdateAsync(int id, ReviewUpsertRequest request)
+        {
+            var entity = await _context.Set<Database.Review>().FindAsync(id);
+            if (entity == null)
+                return null;
+
+            int restaurantId = entity.RestaurantId; // Store before update
+
+            await BeforeUpdate(entity, request);
+
+            MapUpdateToEntity(entity, request);
+
+            await _context.SaveChangesAsync();
+            
+            // Update restaurant average rating after updating review
+            await UpdateRestaurantRating(restaurantId);
+            
+            // Reload entity with navigation properties
+            entity = await _context.Reviews
+                .Include(r => r.Reservation)
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .FirstOrDefaultAsync(r => r.Id == id);
+            
+            return MapToResponse(entity);
+        }
+
+        public new async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _context.Set<Database.Review>().FindAsync(id);
+            if (entity == null)
+                return false;
+
+            int restaurantId = entity.RestaurantId; // Store before delete
+
+            await BeforeDelete(entity);
+
+            _context.Set<Database.Review>().Remove(entity);
+            await _context.SaveChangesAsync();
+            
+            // Update restaurant average rating after deleting review
+            await UpdateRestaurantRating(restaurantId);
+            
+            return true;
+        }
+
+        private async Task UpdateRestaurantRating(int restaurantId)
+        {
+            var restaurant = await _context.Restaurants.FindAsync(restaurantId);
+            if (restaurant == null)
+                return;
+
+            // Calculate average rating from all reviews for this restaurant
+            var reviews = await _context.Reviews
+                .Where(r => r.RestaurantId == restaurantId)
+                .ToListAsync();
+
+            if (reviews.Any())
+            {
+                var averageRating = reviews.Average(r => (decimal)r.Rating);
+                restaurant.AverageRating = averageRating;
+                restaurant.TotalReviews = reviews.Count;
+            }
+            else
+            {
+                // No reviews, set to 0
+                restaurant.AverageRating = 0;
+                restaurant.TotalReviews = 0;
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         protected override IQueryable<Database.Review> ApplyFilter(IQueryable<Database.Review> query, ReviewSearchObject search)
