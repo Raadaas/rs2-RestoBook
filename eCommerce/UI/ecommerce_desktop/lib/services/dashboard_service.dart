@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ecommerce_desktop/models/dashboard_models.dart';
+import 'package:ecommerce_desktop/models/reservation_model.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -35,6 +36,22 @@ class DashboardService {
       return TodayReservations.fromJson(data);
     } else {
       throw Exception("Failed to load today's reservations: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<TodayReservations> getAllReservations(int restaurantId) async {
+    final url = Uri.parse("${baseUrl}reservations/all?restaurantId=$restaurantId");
+    print("Requesting: $url");
+    final response = await http.get(url, headers: _createHeaders());
+
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return TodayReservations.fromJson(data);
+    } else {
+      throw Exception("Failed to load all reservations: ${response.statusCode} - ${response.body}");
     }
   }
 
@@ -124,6 +141,97 @@ class DashboardService {
       return [];
     } else {
       throw Exception("Failed to load weekly occupancy: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<List<Reservation>> getTodayReservationsByState(int restaurantId, String state) async {
+    // Map string state to API state parameter
+    String apiState = 'Requested'; // Default
+    if (state == 'Pending') {
+      apiState = 'Requested';
+    } else if (state == 'Confirmed') {
+      apiState = 'Confirmed';
+    } else if (state == 'Completed') {
+      apiState = 'Completed';
+    }
+    
+    final url = Uri.parse("${baseUrl}reservations/today/by-state?state=$apiState&restaurantId=$restaurantId");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((e) => Reservation.fromJson(e)).toList();
+      }
+      return [];
+    } else {
+      throw Exception("Failed to load reservations: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<List<Reservation>> getAllReservationsByState(int restaurantId, String state) async {
+    // Map string state to API state parameter
+    String apiState = 'Requested'; // Default
+    if (state == 'Pending') {
+      apiState = 'Requested';
+    } else if (state == 'Confirmed') {
+      apiState = 'Confirmed';
+    } else if (state == 'Completed') {
+      apiState = 'Completed';
+    } else if (state == 'Cancelled') {
+      apiState = 'Cancelled';
+    } else if (state == 'Expired') {
+      apiState = 'Expired';
+    }
+    
+    final url = Uri.parse("${baseUrl}reservations/all/by-state?state=$apiState&restaurantId=$restaurantId");
+    final response = await http.get(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((e) => Reservation.fromJson(e)).toList();
+      }
+      return [];
+    } else {
+      throw Exception("Failed to load reservations: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<Reservation> confirmReservation(int id) async {
+    final url = Uri.parse("${baseUrl}reservations/$id/confirm");
+    final response = await http.post(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Reservation.fromJson(data);
+    } else {
+      throw Exception("Failed to confirm reservation: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<Reservation> cancelReservation(int id, {String? reason}) async {
+    final url = Uri.parse("${baseUrl}reservations/$id/cancel");
+    final body = reason != null ? jsonEncode({'reason': reason}) : '{}';
+    final response = await http.post(url, headers: _createHeaders(), body: body);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Reservation.fromJson(data);
+    } else {
+      throw Exception("Failed to cancel reservation: ${response.statusCode} - ${response.body}");
+    }
+  }
+
+  static Future<Reservation> completeReservation(int id) async {
+    final url = Uri.parse("${baseUrl}reservations/$id/complete");
+    final response = await http.post(url, headers: _createHeaders());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Reservation.fromJson(data);
+    } else {
+      throw Exception("Failed to complete reservation: ${response.statusCode} - ${response.body}");
     }
   }
 }

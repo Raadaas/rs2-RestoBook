@@ -130,7 +130,7 @@ namespace eCommerce.Services
             var allReservations = await _context.Reservations
                 .Where(r => r.ReservationDate >= today && 
                            r.ReservationDate < tomorrow &&
-                           (r.Status == "Confirmed" || r.Status == "Pending") &&
+                           (r.State == eCommerce.Model.ReservationState.Confirmed || r.State == eCommerce.Model.ReservationState.Requested) &&
                            r.CancelledAt == null)
                 .ToListAsync();
             

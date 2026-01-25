@@ -4,7 +4,10 @@ import 'package:ecommerce_desktop/providers/dashboard_provider.dart';
 import 'package:ecommerce_desktop/screens/calendar_screen.dart';
 import 'package:ecommerce_desktop/screens/table_layout_screen.dart';
 import 'package:ecommerce_desktop/screens/add_reservation_screen.dart';
+import 'package:ecommerce_desktop/services/dashboard_service.dart';
+import 'package:ecommerce_desktop/models/reservation_model.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatelessWidget {
   final int restaurantId;
@@ -150,6 +153,7 @@ class DashboardScreen extends StatelessWidget {
               reservations?.pending ?? 0,
               Colors.orange,
               context,
+              provider,
             ),
             const SizedBox(height: 10),
             _buildReservationBadge(
@@ -157,6 +161,7 @@ class DashboardScreen extends StatelessWidget {
               reservations?.confirmed ?? 0,
               Colors.green,
               context,
+              provider,
             ),
             const SizedBox(height: 10),
             _buildReservationBadge(
@@ -164,6 +169,7 @@ class DashboardScreen extends StatelessWidget {
               reservations?.completed ?? 0,
               Colors.blue,
               context,
+              provider,
             ),
           ],
         ),
@@ -172,17 +178,12 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildReservationBadge(
-      String label, int count, Color color, BuildContext context) {
+      String label, int count, Color color, BuildContext context, DashboardProvider provider) {
     return InkWell(
       onTap: () {
-                      // Navigate to calendar with filter
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CalendarScreen(restaurantId: restaurantId),
-                        ),
-                      );
+        _showReservationsDialog(context, label, color, provider);
       },
+      borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
@@ -477,6 +478,248 @@ class DashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showReservationsDialog(BuildContext context, String statusLabel, Color color, DashboardProvider provider) async {
+    // Show loading dialog first
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Load reservations for this status (today only)
+      List<Reservation> reservations = await DashboardService.getTodayReservationsByState(restaurantId, statusLabel);
+      
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      // Determine available actions based on status
+      bool canConfirm = statusLabel == 'Pending';
+      bool canCancel = statusLabel == 'Pending' || statusLabel == 'Confirmed';
+      bool canComplete = false; // Completed reservations are automatically handled when they end
+      bool isCompleted = statusLabel == 'Completed';
+      bool isCancelled = statusLabel == 'Cancelled';
+      bool isExpired = statusLabel == 'Expired';
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            '$statusLabel Reservations',
+            style: TextStyle(color: color),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: reservations.isEmpty
+                ? const Text('No reservations found.')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: reservations.length,
+                    itemBuilder: (context, index) {
+                      final reservation = reservations[index];
+                      final timeStr = reservation.reservationTime.split(':').take(2).join(':');
+                      final dateFormat = DateFormat('MMM dd, yyyy');
+                      final dateStr = dateFormat.format(reservation.reservationDate);
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          reservation.userName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Table ${reservation.tableNumber} • $timeStr • ${reservation.numberOfGuests} guests',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Text(
+                                          dateStr,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (canConfirm || canCancel || canComplete)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (canConfirm)
+                                          IconButton(
+                                            icon: const Icon(Icons.check, color: Colors.green, size: 20),
+                                            onPressed: () => _handleConfirm(context, reservation.id, provider),
+                                            tooltip: 'Confirm',
+                                          ),
+                                        if (canCancel)
+                                          IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.red, size: 20),
+                                            onPressed: () => _handleCancel(context, reservation.id, provider),
+                                            tooltip: 'Cancel',
+                                          ),
+                                        if (canComplete)
+                                          IconButton(
+                                            icon: const Icon(Icons.done_all, color: Colors.blue, size: 20),
+                                            onPressed: () => _handleComplete(context, reservation.id, provider),
+                                            tooltip: 'Complete',
+                                          ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading reservations: $e')),
+      );
+    }
+  }
+
+  void _handleConfirm(BuildContext context, int reservationId, DashboardProvider provider) async {
+    try {
+      await DashboardService.confirmReservation(reservationId);
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close dialog
+      provider.loadDashboardData(); // Refresh dashboard
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reservation confirmed successfully')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error confirming reservation: $e')),
+      );
+    }
+  }
+
+  void _handleCancel(BuildContext context, int reservationId, DashboardProvider provider) async {
+    // Ask for cancellation reason (optional)
+    final reasonController = TextEditingController();
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Reservation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Cancellation reason (optional):'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                hintText: 'Enter reason...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Cancel Reservation'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await DashboardService.cancelReservation(reservationId, reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim());
+        if (!context.mounted) return;
+        Navigator.pop(context); // Close reservations dialog
+        provider.loadDashboardData(); // Refresh dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reservation cancelled successfully')),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error cancelling reservation: $e')),
+        );
+      }
+    }
+  }
+
+  void _handleComplete(BuildContext context, int reservationId, DashboardProvider provider) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Reservation'),
+        content: const Text('Mark this reservation as completed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await DashboardService.completeReservation(reservationId);
+        if (!context.mounted) return;
+        Navigator.pop(context); // Close dialog
+        provider.loadDashboardData(); // Refresh dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reservation completed successfully')),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error completing reservation: $e')),
+        );
+      }
+    }
   }
 }
 

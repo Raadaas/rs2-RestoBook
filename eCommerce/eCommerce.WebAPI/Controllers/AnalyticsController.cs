@@ -1,3 +1,4 @@
+using eCommerce.Model;
 using eCommerce.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,10 +40,16 @@ namespace eCommerce.WebAPI.Controllers
                 return NotFound("Restaurant not found");
             }
 
-            // Get all reservations for this restaurant (non-cancelled)
+            // Get today's reservations for this restaurant (non-cancelled and non-expired)
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+            
             var reservations = await _context.Reservations
                 .Where(r => r.RestaurantId == restaurantId.Value &&
-                           r.Status != "Cancelled" &&
+                           r.ReservationDate >= today &&
+                           r.ReservationDate < tomorrow &&
+                           r.State != ReservationState.Cancelled &&
+                           r.State != ReservationState.Expired &&
                            r.CancelledAt == null)
                 .ToListAsync();
 
@@ -121,7 +128,7 @@ namespace eCommerce.WebAPI.Controllers
                     TableId = t.Id,
                     TableNumber = t.TableNumber,
                     Capacity = t.Capacity,
-                    ReservationCount = t.Reservations.Count(r => r.Status != "Cancelled")
+                    ReservationCount = t.Reservations.Count(r => r.State != ReservationState.Cancelled && r.State != ReservationState.Expired)
                 })
                 .ToListAsync();
 
@@ -155,9 +162,10 @@ namespace eCommerce.WebAPI.Controllers
                 .ToListAsync();
 
             var totalReservations = allReservations.Count;
-            var confirmedReservations = allReservations.Count(r => r.Status == "Confirmed");
-            var completedReservations = allReservations.Count(r => r.Status == "Completed");
-            var cancelledReservations = allReservations.Count(r => r.Status == "Cancelled" || r.CancelledAt != null);
+            var confirmedReservations = allReservations.Count(r => r.State == ReservationState.Confirmed);
+            var completedReservations = allReservations.Count(r => r.State == ReservationState.Completed);
+            var cancelledReservations = allReservations.Count(r => r.State == ReservationState.Cancelled || r.CancelledAt != null);
+            var expiredReservations = allReservations.Count(r => r.State == ReservationState.Expired);
 
             // Calculate trend (compare last 30 days with previous 30 days)
             var today = DateTime.Now.Date;
@@ -243,10 +251,11 @@ namespace eCommerce.WebAPI.Controllers
                 return BadRequest("restaurantId is required");
             }
 
-            // Get all reservations for the restaurant (non-cancelled)
+            // Get all reservations for the restaurant (non-cancelled and non-expired)
             var reservations = await _context.Reservations
                 .Where(r => r.RestaurantId == restaurantId.Value &&
-                           r.Status != "Cancelled" &&
+                           r.State != ReservationState.Cancelled &&
+                           r.State != ReservationState.Expired &&
                            r.CancelledAt == null)
                 .ToListAsync();
 

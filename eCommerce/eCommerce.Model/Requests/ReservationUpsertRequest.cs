@@ -26,8 +26,8 @@ namespace eCommerce.Model.Requests
         [Required]
         public int NumberOfGuests { get; set; }
         
-        [MaxLength(20)]
-        public string Status { get; set; } = string.Empty;
+        // Note: Status property removed - State is managed via state machine methods (Confirm, Cancel, Complete)
+        // New reservations default to Requested state
         
         [MaxLength(500)]
         public string? SpecialRequests { get; set; }

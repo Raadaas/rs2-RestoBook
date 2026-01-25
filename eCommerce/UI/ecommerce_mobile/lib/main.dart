@@ -4,6 +4,7 @@ import 'package:ecommerce_mobile/providers/product_provider.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/providers/cuisine_type_provider.dart';
 import 'package:ecommerce_mobile/providers/menu_item_provider.dart';
+import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -19,6 +20,8 @@ void main() {
         create: (context) => CuisineTypeProvider()),
     ChangeNotifierProvider<MenuItemProvider>(
         create: (context) => MenuItemProvider()),
+    ChangeNotifierProvider<ReservationProvider>(
+        create: (context) => ReservationProvider()),
   ], child: const MyLoginApp()));
 }
 
@@ -180,6 +183,13 @@ class LoginPage extends StatelessWidget {
                         );
 
                         if (response.statusCode == 200) {
+                          // Login successful - save user ID
+                          final userData = jsonDecode(response.body);
+                          if (userData['id'] != null) {
+                            AuthProvider.userId = userData['id'] as int;
+                            print('Saved user ID: ${AuthProvider.userId}');
+                          }
+                          
                           // Login successful
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(builder: (context) => const MainScreen())

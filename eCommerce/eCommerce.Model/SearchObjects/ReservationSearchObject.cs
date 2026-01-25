@@ -7,7 +7,7 @@ namespace eCommerce.Model.SearchObjects
         public int? UserId { get; set; }
         public int? RestaurantId { get; set; }
         public int? TableId { get; set; }
-        public string? Status { get; set; }
+        public ReservationState? State { get; set; }
         public DateTime? ReservationDateFrom { get; set; }
         public DateTime? ReservationDateTo { get; set; }
     }

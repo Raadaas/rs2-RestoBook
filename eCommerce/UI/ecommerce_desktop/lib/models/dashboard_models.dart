@@ -2,11 +2,15 @@ class TodayReservations {
   final int pending;
   final int confirmed;
   final int completed;
+  final int cancelled;
+  final int expired;
 
   TodayReservations({
     required this.pending,
     required this.confirmed,
     required this.completed,
+    this.cancelled = 0,
+    this.expired = 0,
   });
 
   factory TodayReservations.fromJson(Map<String, dynamic> json) {
@@ -14,6 +18,8 @@ class TodayReservations {
       pending: json['pending'] ?? 0,
       confirmed: json['confirmed'] ?? 0,
       completed: json['completed'] ?? 0,
+      cancelled: json['cancelled'] ?? 0,
+      expired: json['expired'] ?? 0,
     );
   }
 }

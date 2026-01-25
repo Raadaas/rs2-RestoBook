@@ -24,6 +24,9 @@ builder.Services.AddTransient<IReservationHistoryService, ReservationHistoryServ
 builder.Services.AddTransient<IReviewService, ReviewService>();
 builder.Services.AddTransient<IRestaurantStatisticService, RestaurantStatisticService>();
 
+// Register background service for auto-completing reservations
+builder.Services.AddHostedService<ReservationAutoCompleteService>();
+
 builder.Services.AddMapster();
 // Configure database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=localhost;Database=eCommerceDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";

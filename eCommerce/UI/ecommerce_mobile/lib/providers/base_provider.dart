@@ -126,6 +126,8 @@ abstract class BaseProvider<T> with ChangeNotifier {
         var encoded = value;
         if (value is String) {
           encoded = Uri.encodeComponent(value);
+        } else if (value is bool) {
+          encoded = value.toString().toLowerCase(); // Convert bool to lowercase string for backend
         }
         query += '$prefix$key=$encoded';
       } else if (value is DateTime) {

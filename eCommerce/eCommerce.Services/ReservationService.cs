@@ -1,3 +1,4 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -140,7 +141,8 @@ namespace eCommerce.Services
             var userOverlappingReservations = await _context.Reservations
                 .Where(r => r.UserId == entity.UserId
                     && r.RestaurantId != entity.RestaurantId  // Only check different restaurants
-                    && r.Status != "Cancelled"
+                    && r.State != ReservationState.Cancelled
+                    && r.State != ReservationState.Expired
                     && r.CancelledAt == null
                     && (r.ReservationDate.Date == entity.ReservationDate.Date || r.ReservationDate.Date == reservationEndDate))
                 .ToListAsync();
@@ -171,7 +173,8 @@ namespace eCommerce.Services
             var tableOverlappingReservations = await _context.Reservations
                 .Where(r => r.TableId == entity.TableId
                     && r.RestaurantId == entity.RestaurantId
-                    && r.Status != "Cancelled"
+                    && r.State != ReservationState.Cancelled
+                    && r.State != ReservationState.Expired
                     && r.CancelledAt == null
                     && (r.ReservationDate.Date == entity.ReservationDate.Date || r.ReservationDate.Date == reservationEndDate))
                 .ToListAsync();
@@ -322,7 +325,8 @@ namespace eCommerce.Services
                 .Where(r => r.UserId == entity.UserId
                     && r.RestaurantId != entity.RestaurantId  // Only check different restaurants
                     && r.Id != entity.Id
-                    && r.Status != "Cancelled"
+                    && r.State != ReservationState.Cancelled
+                    && r.State != ReservationState.Expired
                     && r.CancelledAt == null
                     && (r.ReservationDate.Date == entity.ReservationDate.Date || r.ReservationDate.Date == reservationEndDate))
                 .ToListAsync();
@@ -354,7 +358,8 @@ namespace eCommerce.Services
                 .Where(r => r.TableId == entity.TableId
                     && r.RestaurantId == entity.RestaurantId
                     && r.Id != entity.Id
-                    && r.Status != "Cancelled"
+                    && r.State != ReservationState.Cancelled
+                    && r.State != ReservationState.Expired
                     && r.CancelledAt == null
                     && (r.ReservationDate.Date == entity.ReservationDate.Date || r.ReservationDate.Date == reservationEndDate))
                 .ToListAsync();
@@ -384,11 +389,8 @@ namespace eCommerce.Services
         {
             base.MapInsertToEntity(entity, request);
             
-            // Set default status if not provided
-            if (string.IsNullOrEmpty(entity.Status))
-            {
-                entity.Status = "Pending";
-            }
+            // State defaults to Requested via the property initializer, no need to set it here
+            // The entity will be created with State = ReservationState.Requested by default
             
             return entity;
         }
@@ -440,9 +442,9 @@ namespace eCommerce.Services
                 query = query.Where(r => r.TableId == search.TableId.Value);
             }
 
-            if (!string.IsNullOrEmpty(search.Status))
+            if (search.State.HasValue)
             {
-                query = query.Where(r => r.Status == search.Status);
+                query = query.Where(r => r.State == search.State.Value);
             }
 
             if (search.ReservationDateFrom.HasValue)
@@ -476,7 +478,7 @@ namespace eCommerce.Services
                 ReservationTime = entity.ReservationTime,
                 Duration = entity.Duration,
                 NumberOfGuests = entity.NumberOfGuests,
-                Status = entity.Status,
+                Status = entity.State.ToString(),
                 SpecialRequests = entity.SpecialRequests,
                 QRCode = entity.QRCode,
                 CreatedAt = entity.CreatedAt,
@@ -515,9 +517,9 @@ namespace eCommerce.Services
 
             var reservations = await query.ToListAsync();
 
-            var pending = reservations.Count(r => r.Status == "Pending");
-            var confirmed = reservations.Count(r => r.Status == "Confirmed");
-            var completed = reservations.Count(r => r.Status == "Completed");
+            var pending = reservations.Count(r => r.State == ReservationState.Requested);
+            var confirmed = reservations.Count(r => r.State == ReservationState.Confirmed);
+            var completed = reservations.Count(r => r.State == ReservationState.Completed);
 
             return new
             {
@@ -525,6 +527,150 @@ namespace eCommerce.Services
                 confirmed = confirmed,
                 completed = completed
             };
+        }
+
+        public async Task<object> GetAllReservationsAsync(int? restaurantId = null)
+        {
+            var query = _context.Reservations.AsQueryable();
+
+            if (restaurantId.HasValue)
+            {
+                query = query.Where(r => r.RestaurantId == restaurantId.Value);
+            }
+
+            var reservations = await query.ToListAsync();
+
+            var pending = reservations.Count(r => r.State == ReservationState.Requested);
+            var confirmed = reservations.Count(r => r.State == ReservationState.Confirmed);
+            var completed = reservations.Count(r => r.State == ReservationState.Completed);
+            var cancelled = reservations.Count(r => r.State == ReservationState.Cancelled);
+            var expired = reservations.Count(r => r.State == ReservationState.Expired);
+
+            return new
+            {
+                pending = pending,
+                confirmed = confirmed,
+                completed = completed,
+                cancelled = cancelled,
+                expired = expired
+            };
+        }
+
+        public async Task<List<ReservationResponse>> GetTodayReservationsByStateAsync(ReservationState state, int? restaurantId = null)
+        {
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+
+            var query = _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .Where(r => r.ReservationDate >= today && 
+                           r.ReservationDate < tomorrow &&
+                           r.State == state);
+
+            if (restaurantId.HasValue)
+            {
+                query = query.Where(r => r.RestaurantId == restaurantId.Value);
+            }
+
+            var list = await query.ToListAsync();
+            return list.Select(MapToResponse).ToList();
+        }
+
+        public async Task<List<ReservationResponse>> GetAllReservationsByStateAsync(ReservationState state, int? restaurantId = null)
+        {
+            var query = _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .Where(r => r.State == state);
+
+            if (restaurantId.HasValue)
+            {
+                query = query.Where(r => r.RestaurantId == restaurantId.Value);
+            }
+
+            var list = await query.ToListAsync();
+            return list.Select(MapToResponse).ToList();
+        }
+
+        public async Task<ReservationResponse> ConfirmReservationAsync(int id)
+        {
+            var entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (entity == null)
+            {
+                throw new InvalidOperationException($"Reservation with ID {id} not found.");
+            }
+
+            entity.Confirm();
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return MapToResponse(entity);
+        }
+
+        public async Task<ReservationResponse> CancelReservationAsync(int id, string? reason = null)
+        {
+            var entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (entity == null)
+            {
+                throw new InvalidOperationException($"Reservation with ID {id} not found.");
+            }
+
+            entity.Cancel(reason);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return MapToResponse(entity);
+        }
+
+        public async Task<ReservationResponse> CompleteReservationAsync(int id)
+        {
+            var entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (entity == null)
+            {
+                throw new InvalidOperationException($"Reservation with ID {id} not found.");
+            }
+
+            entity.Complete();
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            entity = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Table)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return MapToResponse(entity);
         }
     }
 }
