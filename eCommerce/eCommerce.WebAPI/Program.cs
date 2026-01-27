@@ -23,6 +23,7 @@ builder.Services.AddTransient<IReservationService, ReservationService>();
 builder.Services.AddTransient<IReservationHistoryService, ReservationHistoryService>();
 builder.Services.AddTransient<IReviewService, ReviewService>();
 builder.Services.AddTransient<IRestaurantStatisticService, RestaurantStatisticService>();
+builder.Services.AddTransient<IChatService, ChatService>();
 
 // Register background service for auto-completing reservations
 builder.Services.AddHostedService<ReservationAutoCompleteService>();
