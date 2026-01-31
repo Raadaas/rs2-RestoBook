@@ -55,6 +55,7 @@ namespace eCommerce.Services
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<eCommerceDbContext>();
+            var loyaltyService = scope.ServiceProvider.GetRequiredService<ILoyaltyService>();
 
             var now = DateTime.UtcNow;
 
@@ -87,6 +88,7 @@ namespace eCommerce.Services
                     try
                     {
                         reservation.Complete();
+                        await loyaltyService.AddPointsForCompletedReservationAsync(reservation);
                         completedCount++;
                         _logger.LogInformation(
                             "Auto-completed reservation {ReservationId} (EndTime: {EndTime:yyyy-MM-dd HH:mm:ss})",

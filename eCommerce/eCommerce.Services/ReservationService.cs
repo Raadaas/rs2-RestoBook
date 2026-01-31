@@ -13,8 +13,11 @@ namespace eCommerce.Services
 {
     public class ReservationService : BaseCRUDService<ReservationResponse, ReservationSearchObject, Database.Reservation, ReservationUpsertRequest, ReservationUpsertRequest>, IReservationService
     {
-        public ReservationService(eCommerceDbContext context, IMapper mapper) : base(context, mapper)
+        private readonly ILoyaltyService _loyaltyService;
+
+        public ReservationService(eCommerceDbContext context, IMapper mapper, ILoyaltyService loyaltyService) : base(context, mapper)
         {
+            _loyaltyService = loyaltyService;
         }
 
         protected override async Task BeforeInsert(Database.Reservation entity, ReservationUpsertRequest request)
@@ -661,6 +664,7 @@ namespace eCommerce.Services
             }
 
             entity.Complete();
+            await _loyaltyService.AddPointsForCompletedReservationAsync(entity);
             await _context.SaveChangesAsync();
 
             // Reload with navigation properties

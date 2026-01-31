@@ -24,9 +24,6 @@ namespace eCommerce.Services.Database
         
         public int PointsRequired { get; set; }
         
-        [MaxLength(50)]
-        public string? RewardType { get; set; }
-        
         public bool IsActive { get; set; } = true;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

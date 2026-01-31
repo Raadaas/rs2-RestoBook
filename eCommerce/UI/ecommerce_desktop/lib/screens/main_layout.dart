@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/screens/reports_screen.dart';
 import 'package:ecommerce_desktop/screens/menu_screen.dart';
 import 'package:ecommerce_desktop/screens/all_reservations_screen.dart';
 import 'package:ecommerce_desktop/screens/chat_screen.dart';
+import 'package:ecommerce_desktop/screens/rewards_screen.dart';
 import 'package:ecommerce_desktop/screens/profile_details_screen.dart';
 import 'package:ecommerce_desktop/models/restaurant_model.dart';
 import 'package:ecommerce_desktop/model/user.dart';
@@ -70,6 +71,7 @@ class _MainLayoutState extends State<MainLayout> {
     MenuScreen(restaurantId: widget.restaurantId),
     AllReservationsScreen(restaurantId: widget.restaurantId),
     ChatScreen(restaurantId: widget.restaurantId),
+    RewardsScreen(restaurantId: widget.restaurantId),
   ];
 
   Widget get _currentScreen {
@@ -111,6 +113,10 @@ class _MainLayoutState extends State<MainLayout> {
     NavigationItem(
       icon: Icons.chat,
       label: 'Chat',
+    ),
+    NavigationItem(
+      icon: Icons.card_giftcard,
+      label: 'Rewards',
     ),
   ];
 

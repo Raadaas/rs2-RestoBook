@@ -3,6 +3,7 @@ import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/model/cuisine_type.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/providers/cuisine_type_provider.dart';
+import 'package:ecommerce_mobile/providers/favorite_provider.dart';
 import 'package:ecommerce_mobile/screens/restaurant_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadRecentRestaurants();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadFilterData();
+      context.read<FavoriteProvider>().load();
     });
   }
 
@@ -381,7 +383,9 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildRestaurantCard(Restaurant restaurant) {
     final rating = restaurant.averageRating ?? 0.0;
     final reviews = restaurant.totalReviews;
-    
+    final fav = context.watch<FavoriteProvider>();
+    final isFav = fav.ids.contains(restaurant.id);
+
     return GestureDetector(
       onTap: () async {
         await _saveRecentRestaurant(restaurant);
@@ -458,10 +462,19 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            // Favorite icon
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Icon(Icons.favorite_border, color: Colors.grey[400], size: 24),
+              child: GestureDetector(
+                onTap: () async {
+                  await context.read<FavoriteProvider>().toggle(restaurant.id);
+                  if (mounted) setState(() {});
+                },
+                child: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.red : Colors.grey[400],
+                  size: 24,
+                ),
+              ),
             ),
           ],
         ),

@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 
-class RestaurantInfoScreen extends StatelessWidget {
-  final int restaurantId;
+class NotImplementedScreen extends StatelessWidget {
+  final String title;
 
-  const RestaurantInfoScreen({
-    super.key,
-    required this.restaurantId,
-  });
+  const NotImplementedScreen({super.key, this.title = 'Not implemented'});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Restaurant'),
+        title: Text(title),
         backgroundColor: const Color(0xFF8B7355),
         foregroundColor: Colors.white,
       ),
