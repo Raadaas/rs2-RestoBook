@@ -8,6 +8,11 @@ class ReviewProvider extends BaseProvider<Review> {
   @override
   Review fromJson(dynamic json) => Review.fromJson(json);
 
+  Future<List<Review>> getByRestaurant(int restaurantId) async {
+    final result = await get(filter: {'RestaurantId': restaurantId, 'RetrieveAll': true});
+    return result.items ?? [];
+  }
+
   Future<List<Review>> getMyReviews() async {
     final userId = AuthProvider.userId;
     if (userId == null) return [];
@@ -34,5 +39,28 @@ class ReviewProvider extends BaseProvider<Review> {
 
   Future<void> deleteReview(int id) async {
     await delete(id);
+  }
+
+  Future<Review> createReview({
+    required int reservationId,
+    required int userId,
+    required int restaurantId,
+    required int rating,
+    String? comment,
+  }) async {
+    final body = {
+      'reservationId': reservationId,
+      'userId': userId,
+      'restaurantId': restaurantId,
+      'rating': rating,
+      'comment': comment,
+      'foodQuality': null,
+      'serviceQuality': null,
+      'ambienceRating': null,
+      'valueForMoney': null,
+      'isVerified': false,
+    };
+    final result = await insert(body);
+    return result as Review;
   }
 }

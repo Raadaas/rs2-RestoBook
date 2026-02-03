@@ -150,6 +150,11 @@ class ReservationProvider extends BaseProvider<Reservation> {
     }
   }
 
+  Future<Reservation> createReservation(Map<String, dynamic> request) async {
+    final result = await insert(request);
+    return result as Reservation;
+  }
+
   // Update reservation (only for Requested state)
   Future<Reservation?> updateReservation(int id, Map<String, dynamic> request) async {
     try {

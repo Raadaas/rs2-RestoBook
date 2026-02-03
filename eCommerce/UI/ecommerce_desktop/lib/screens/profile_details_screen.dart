@@ -9,6 +9,8 @@ import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/providers/city_provider.dart';
 import 'package:ecommerce_desktop/providers/cuisine_type_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/providers/restaurant_gallery_provider.dart';
+import 'package:ecommerce_desktop/models/restaurant_gallery_model.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -42,17 +44,37 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   bool _isEditRestaurantMode = false;
   File? _selectedImageFile;
   String? _selectedImageDataUrl;
+  List<RestaurantGalleryItem> _galleryImages = [];
+  bool _galleryLoading = false;
 
   final UserProvider _userProvider = UserProvider();
   final RestaurantProvider _restaurantProvider = RestaurantProvider();
   final CityProvider _cityProvider = CityProvider();
   final CuisineTypeProvider _cuisineTypeProvider = CuisineTypeProvider();
+  final RestaurantGalleryProvider _galleryProvider = RestaurantGalleryProvider();
 
   @override
   void initState() {
     super.initState();
     _currentUser = widget.user;
     _currentRestaurant = widget.restaurant;
+    _loadGallery();
+  }
+
+  Future<void> _loadGallery() async {
+    setState(() => _galleryLoading = true);
+    try {
+      final list = await _galleryProvider.getByRestaurant(_currentRestaurant.id);
+      if (mounted) setState(() {
+        _galleryImages = list;
+        _galleryLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() {
+        _galleryImages = [];
+        _galleryLoading = false;
+      });
+    }
   }
 
   Future<void> _refreshData() async {
@@ -249,6 +271,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 const SizedBox(height: 24),
                 // Restaurant Information Section
                 _buildRestaurantInformationSection(),
+                const SizedBox(height: 24),
+                // Restaurant Gallery Section
+                _buildRestaurantGallerySection(),
               ],
             ),
           ),
@@ -1260,6 +1285,218 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildRestaurantGallerySection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF8B7355).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Restaurant Gallery',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4A4A4A),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _galleryLoading ? null : _pickAndUploadGalleryImage,
+                  icon: const Icon(Icons.add_photo_alternate, size: 18),
+                  label: const Text('Upload Image'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B7355),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _galleryLoading && _galleryImages.isEmpty
+                ? const Center(child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ))
+                : _galleryImages.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            children: [
+                              Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey[400]),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No images yet',
+                                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Click "Upload Image" to add photos',
+                                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: _galleryImages.map((item) => _buildGalleryImageCard(item)).toList(),
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryImageCard(RestaurantGalleryItem item) {
+    return Stack(
+      children: [
+        Container(
+          width: 140,
+          height: 140,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[200],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                ? (item.imageUrl!.startsWith('data:image/')
+                    ? Image.memory(
+                        base64Decode(item.imageUrl!.split(',')[1]),
+                        fit: BoxFit.cover,
+                        width: 140,
+                        height: 140,
+                      )
+                    : Image.network(
+                        item.imageUrl!,
+                        fit: BoxFit.cover,
+                        width: 140,
+                        height: 140,
+                        errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: 48, color: Colors.grey[400]),
+                      ))
+                : Icon(Icons.image, size: 48, color: Colors.grey[400]),
+          ),
+        ),
+        Positioned(
+          top: 6,
+          right: 6,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _deleteGalleryImage(item.id!),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickAndUploadGalleryImage() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final filePath = result.files.single.path;
+      if (filePath == null) return;
+
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
+      final decodedImage = img.decodeImage(bytes);
+      if (decodedImage == null) throw Exception('Could not decode image');
+
+      img.Image resized = decodedImage;
+      if (decodedImage.width > 800 || decodedImage.height > 800) {
+        if (decodedImage.width > decodedImage.height) {
+          resized = img.copyResize(decodedImage, width: 800);
+        } else {
+          resized = img.copyResize(decodedImage, height: 800);
+        }
+      }
+      final compressedBytes = Uint8List.fromList(img.encodeJpg(resized, quality: 75));
+      final dataUrl = 'data:image/jpeg;base64,${base64Encode(compressedBytes)}';
+
+      await _galleryProvider.insert(
+        restaurantId: _currentRestaurant.id,
+        imageUrl: dataUrl,
+        displayOrder: _galleryImages.length,
+      );
+      await _loadGallery();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image added successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteGalleryImage(int id) async {
+    try {
+      await _galleryProvider.delete(id);
+      await _loadGallery();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image removed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting image: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildRestaurantView() {

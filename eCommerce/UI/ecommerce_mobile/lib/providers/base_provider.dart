@@ -21,7 +21,9 @@ abstract class BaseProvider<T> with ChangeNotifier {
 
     if (filter != null) {
       var queryString = getQueryString(filter);
-      url = "$url?$queryString";
+      if (queryString.startsWith('&')) queryString = '?${queryString.substring(1)}';
+      else if (queryString.isNotEmpty && !queryString.startsWith('?')) queryString = '?$queryString';
+      url = "$url$queryString";
     }
 
     var uri = Uri.parse(url);

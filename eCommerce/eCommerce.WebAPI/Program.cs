@@ -26,6 +26,7 @@ builder.Services.AddTransient<IRestaurantStatisticService, RestaurantStatisticSe
 builder.Services.AddTransient<IChatService, ChatService>();
 builder.Services.AddTransient<ILoyaltyService, LoyaltyService>();
 builder.Services.AddTransient<IRewardService, RewardService>();
+builder.Services.AddTransient<IRestaurantGalleryService, RestaurantGalleryService>();
 
 // Register background service for auto-completing reservations
 builder.Services.AddHostedService<ReservationAutoCompleteService>();

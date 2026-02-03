@@ -15,7 +15,7 @@ namespace eCommerce.Services.Database
         public Restaurant Restaurant { get; set; } = null!;
         
         [Required]
-        [MaxLength(500)]
+        [MaxLength(100000)]
         public string ImageUrl { get; set; } = string.Empty;
         
         [MaxLength(20)]
