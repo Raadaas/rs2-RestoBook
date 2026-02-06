@@ -4,6 +4,7 @@ import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/user.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/user_provider.dart';
+import 'package:ecommerce_mobile/providers/validation_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
@@ -25,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _loading = true;
   String? _error;
   String? _selectedImageDataUrl;
+  Map<String, String> _serverErrors = {};
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -226,6 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required TextEditingController controller,
     required IconData icon,
     String? hint,
+    String? errorText,
     TextInputType? keyboardType,
     bool obscureText = false,
   }) {
@@ -247,12 +250,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           obscureText: obscureText,
           decoration: InputDecoration(
             hintText: hint,
+            errorText: errorText,
             prefixIcon: Icon(icon, size: 22, color: Colors.grey[600]),
             filled: true,
             fillColor: _beige,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
@@ -264,6 +272,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _save() async {
     final user = _user;
     if (user == null) return;
+    setState(() => _serverErrors = {});
+
     final first = _firstNameController.text.trim();
     final last = _lastNameController.text.trim();
     final username = _usernameController.text.trim();
@@ -271,7 +281,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final phone = _phoneController.text.trim();
 
     if (first.isEmpty || last.isEmpty || username.isEmpty || email.isEmpty) {
-      _showSnack('Please fill in required fields');
+      setState(() {
+        if (first.isEmpty) _serverErrors['firstName'] = 'First name is required.';
+        if (last.isEmpty) _serverErrors['lastName'] = 'Last name is required.';
+        if (username.isEmpty) _serverErrors['username'] = 'Username is required.';
+        if (email.isEmpty) _serverErrors['email'] = 'Email address is required.';
+      });
       return;
     }
 
@@ -284,16 +299,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'phoneNumber': phone.isEmpty ? null : phone,
         'imageUrl': _selectedImageDataUrl ?? user.imageUrl,
         'isActive': user.isActive,
-        'roleIds': <int>[],
+        'isAdmin': false,
+        'isClient': true,
       };
       await _userProvider.update(user.id, request);
       if (username != user.username) AuthProvider.username = username;
-      setState(() => _selectedImageDataUrl = null);
+      setState(() {
+        _selectedImageDataUrl = null;
+        _serverErrors = {};
+      });
       await _load(showLoading: false);
       if (!mounted) return;
-      _showSnack('Profile updated');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile has been successfully updated.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on ValidationException catch (e) {
+      setState(() => _serverErrors = e.firstErrors);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     } catch (e) {
-      if (mounted) _showSnack('Error: ${e.toString().replaceFirst('Exception: ', '')}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -478,11 +519,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       const SizedBox(height: 28),
+                      if (_serverErrors['_form'] != null) ...[
+                        Text(
+                          _serverErrors['_form']!,
+                          style: TextStyle(fontSize: 13, color: Colors.red[700]),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       _input(
                         label: 'First Name',
                         controller: _firstNameController,
                         icon: Icons.person_outline,
                         hint: 'First name',
+                        errorText: _serverErrors['firstName'],
                       ),
                       const SizedBox(height: 16),
                       _input(
@@ -490,6 +539,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         controller: _lastNameController,
                         icon: Icons.person_outline,
                         hint: 'Last name',
+                        errorText: _serverErrors['lastName'],
                       ),
                       const SizedBox(height: 16),
                       _input(
@@ -497,22 +547,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         controller: _usernameController,
                         icon: Icons.badge_outlined,
                         hint: 'Username',
+                        errorText: _serverErrors['username'],
                       ),
                       const SizedBox(height: 16),
                       _input(
                         label: 'Email Address',
                         controller: _emailController,
                         icon: Icons.email_outlined,
-                        hint: 'john.doe@email.com',
+                        hint: 'e.g. user@example.com',
                         keyboardType: TextInputType.emailAddress,
+                        errorText: _serverErrors['email'],
                       ),
                       const SizedBox(height: 16),
                       _input(
-                        label: 'Phone Number',
+                        label: 'Phone Number (optional)',
                         controller: _phoneController,
                         icon: Icons.phone_outlined,
-                        hint: '+387 61 234 567',
+                        hint: 'e.g. +1 234 567 8900',
                         keyboardType: TextInputType.phone,
+                        errorText: _serverErrors['phoneNumber'],
                       ),
                       const SizedBox(height: 32),
                       SizedBox(

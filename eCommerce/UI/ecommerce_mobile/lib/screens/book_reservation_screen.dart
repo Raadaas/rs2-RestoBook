@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
+import 'package:ecommerce_mobile/providers/validation_exception.dart';
 import 'package:http/http.dart' as http;
 import 'package:ecommerce_mobile/app_styles.dart';
 
@@ -131,8 +132,11 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
+        final String message = e is ValidationException
+            ? (e as ValidationException).message
+            : 'Something went wrong. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text(message)),
         );
       }
     }

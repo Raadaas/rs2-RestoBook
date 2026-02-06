@@ -24,7 +24,12 @@ namespace eCommerce.WebAPI.Filters
         {
             _logger.LogError(context.Exception, context.Exception.Message);
             
-            if(context.Exception is UserException) 
+            if (context.Exception is UserException)
+            {
+                context.ModelState.AddModelError("userError", context.Exception.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            }
+            else if (context.Exception is InvalidOperationException)
             {
                 context.ModelState.AddModelError("userError", context.Exception.Message);
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -35,12 +40,10 @@ namespace eCommerce.WebAPI.Filters
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
 
-            var list = context.ModelState.Where(x => x.Value.Errors.Count > 0)
-                .ToDictionary(x => x.Key, y => y.Value.Errors.Select(z => z.ErrorMessage));
+            var list = context.ModelState.Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(x => x.Key, y => y.Value!.Errors.Select(z => z.ErrorMessage ?? "Invalid input.").ToArray());
 
-            context.Result = new JsonResult(new {
-                errors = list
-            });
+            context.Result = new JsonResult(new { errors = list });
         }
     }
 }

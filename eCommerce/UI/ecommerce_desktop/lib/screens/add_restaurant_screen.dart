@@ -7,6 +7,7 @@ import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/providers/city_provider.dart';
 import 'package:ecommerce_desktop/providers/cuisine_type_provider.dart';
 import 'package:ecommerce_desktop/model/search_result.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -129,30 +130,6 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5F0),
-        elevation: 0,
-        foregroundColor: const Color(0xFF333333),
-        title: const Text(
-          'Add Restaurant',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF333333),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: Container(
-            height: 3,
-            margin: const EdgeInsets.only(left: 24, right: 24, bottom: 12),
-            decoration: BoxDecoration(
-              color: _brownLight,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-      ),
       body: FutureBuilder<List<dynamic>>(
         future: Future.wait([
           _cityProvider.get(filter: {'isActive': true}),
@@ -182,6 +159,12 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const ScreenTitleHeader(
+                      title: 'Add Restaurant',
+                      subtitle: 'Register a new restaurant',
+                      icon: Icons.restaurant_rounded,
+                    ),
+                    const SizedBox(height: 24),
                     if (_error != null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),

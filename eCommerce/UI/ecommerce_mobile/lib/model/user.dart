@@ -10,6 +10,8 @@ class User {
   final DateTime? passwordChangedAt;
   final String? phoneNumber;
   final String? imageUrl;
+  final bool isAdmin;
+  final bool isClient;
 
   User({
     required this.id,
@@ -23,6 +25,8 @@ class User {
     this.passwordChangedAt,
     this.phoneNumber,
     this.imageUrl,
+    this.isAdmin = false,
+    this.isClient = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,8 @@ class User {
           : null,
       phoneNumber: json['phoneNumber'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      isAdmin: json['isAdmin'] ?? false,
+      isClient: json['isClient'] ?? true,
     );
   }
 }

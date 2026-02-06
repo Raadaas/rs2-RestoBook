@@ -5,6 +5,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace eCommerce.WebAPI.Controllers
@@ -63,7 +64,7 @@ namespace eCommerce.WebAPI.Controllers
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { errors = new Dictionary<string, string[]> { ["userError"] = new[] { ex.Message } } });
             }
         }
 
@@ -77,7 +78,7 @@ namespace eCommerce.WebAPI.Controllers
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { errors = new Dictionary<string, string[]> { ["userError"] = new[] { ex.Message } } });
             }
         }
 
@@ -91,7 +92,7 @@ namespace eCommerce.WebAPI.Controllers
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { errors = new Dictionary<string, string[]> { ["userError"] = new[] { ex.Message } } });
             }
         }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ecommerce_mobile/model/search_result.dart';
+import 'package:ecommerce_mobile/providers/validation_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
@@ -55,12 +56,18 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var jsonRequest = jsonEncode(request);
     var response = await http.post(uri, headers: headers, body: jsonRequest);
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw new Exception("Unknown error");
+    if (response.statusCode == 400) {
+      _throwValidationException(response.body);
     }
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      var decoded = jsonDecode(response.body);
+      var data = decoded is Map && decoded['data'] != null ? decoded['data'] : decoded;
+      return fromJson(data);
+    }
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized");
+    }
+    throw Exception("Something went wrong. Please try again.");
   }
 
   Future<T> update(int id, [dynamic request]) async {
@@ -71,12 +78,38 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var jsonRequest = jsonEncode(request);
     var response = await http.put(uri, headers: headers, body: jsonRequest);
 
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw new Exception("Unknown error");
+    if (response.statusCode == 400) {
+      _throwValidationException(response.body);
     }
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      var decoded = jsonDecode(response.body);
+      var data = decoded is Map && decoded['data'] != null ? decoded['data'] : decoded;
+      return fromJson(data);
+    }
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized");
+    }
+    throw Exception("Something went wrong. Please try again.");
+  }
+
+  void _throwValidationException(String body) {
+    try {
+      final err = jsonDecode(body);
+      if (err is Map && err['errors'] != null && err['errors'] is Map) {
+        final errors = <String, List<String>>{};
+        (err['errors'] as Map).forEach((key, value) {
+          if (value is List) {
+            errors[key.toString()] = value.map((e) => e.toString()).toList();
+          } else if (value is String) {
+            errors[key.toString()] = [value];
+          }
+        });
+        throw ValidationException(errors);
+      }
+    } catch (e) {
+      if (e is ValidationException) rethrow;
+    }
+    throw Exception(body.isNotEmpty ? body : 'Please check your input.');
   }
 
   Future<void> delete(int id) async {

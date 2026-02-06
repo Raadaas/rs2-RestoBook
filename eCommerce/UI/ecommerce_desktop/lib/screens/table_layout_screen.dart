@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_desktop/models/table_model.dart' as table_model;
 import 'package:ecommerce_desktop/providers/table_provider.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 
 class TableLayoutScreen extends StatefulWidget {
   final int restaurantId;
@@ -726,13 +727,10 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Restaurant Floor Plan',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A4A4A),
-                    ),
+                  const ScreenTitleHeader(
+                    title: 'Restaurant Floor Plan',
+                    subtitle: 'Manage tables and layout',
+                    icon: Icons.table_restaurant_rounded,
                   ),
                   const SizedBox(height: 16),
                   Expanded(

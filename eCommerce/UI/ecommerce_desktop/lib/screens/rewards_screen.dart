@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ecommerce_desktop/models/reward_model.dart';
 import 'package:ecommerce_desktop/providers/reward_provider.dart';
 import 'package:ecommerce_desktop/screens/create_reward_screen.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 
 class RewardsScreen extends StatefulWidget {
   final int restaurantId;
@@ -141,61 +142,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF8B7355),
-                            const Color(0xFF8B7355).withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF8B7355).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 28),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Loyalty Rewards',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4A4A4A),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Manage rewards for your loyalty program',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Material(
+            ScreenTitleHeader(
+              title: 'Loyalty Rewards',
+              subtitle: 'Manage rewards for your loyalty program',
+              icon: Icons.card_giftcard_rounded,
+              trailing: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () async {
@@ -245,7 +196,6 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     ),
                   ),
                 ),
-              ],
             ),
             const SizedBox(height: 28),
 

@@ -6,14 +6,15 @@ namespace eCommerce.Model.Requests
 {
     public class TableUpsertRequest
     {
-        [Required]
+        [Required(ErrorMessage = "Restaurant ID is required.")]
         public int RestaurantId { get; set; }
         
-        [Required]
-        [MaxLength(20)]
+        [Required(ErrorMessage = "Table number is required.")]
+        [MaxLength(20, ErrorMessage = "Table number must not exceed 20 characters.")]
         public string TableNumber { get; set; } = string.Empty;
         
-        [Required]
+        [Required(ErrorMessage = "Capacity is required.")]
+        [Range(1, 50, ErrorMessage = "Capacity must be between 1 and 50.")]
         public int Capacity { get; set; }
         
         [Column(TypeName = "decimal(10,2)")]

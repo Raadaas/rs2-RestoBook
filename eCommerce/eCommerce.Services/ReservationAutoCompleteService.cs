@@ -1,6 +1,7 @@
 using eCommerce.Model;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,14 +21,20 @@ namespace eCommerce.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ReservationAutoCompleteService> _logger;
-        private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(1); // Check every minute
+        private readonly TimeSpan _checkInterval;
 
         public ReservationAutoCompleteService(
             IServiceProvider serviceProvider,
-            ILogger<ReservationAutoCompleteService> logger)
+            ILogger<ReservationAutoCompleteService> logger,
+            IConfiguration configuration)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+            // Shorter interval in Development for easier testing (e.g. 1-min duration reservations)
+            var val = configuration["ReservationAutoComplete:CheckIntervalSeconds"];
+            var intervalSeconds = int.TryParse(val, out var s) ? s : 60;
+            _checkInterval = TimeSpan.FromSeconds(Math.Max(5, intervalSeconds));
+            _logger.LogInformation("ReservationAutoCompleteService check interval: {Interval}s", _checkInterval.TotalSeconds);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -75,14 +82,12 @@ namespace eCommerce.Services
             // Process confirmed reservations - complete them if EndTime has passed
             foreach (var reservation in confirmedReservations)
             {
-                // Calculate EndTime: ReservationDate.Date.Add(ReservationTime).Add(Duration)
-                // EndTime is a computed property, so we need to calculate it manually
                 var startTime = reservation.ReservationDate.Date.Add(reservation.ReservationTime);
                 var endTime = startTime.Add(reservation.Duration);
+                // Treat stored datetime as server local time, convert to UTC for comparison
+                if (endTime.Kind == DateTimeKind.Unspecified)
+                    endTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(endTime, DateTimeKind.Local));
 
-                // Compare with UTC now
-                // If ReservationDate is stored in local time, we need to handle timezone conversion
-                // For now, assuming ReservationDate is in UTC or we compare as-is
                 if (endTime <= now)
                 {
                     try
@@ -109,11 +114,11 @@ namespace eCommerce.Services
             // Process requested reservations - expire them if EndTime has passed
             foreach (var reservation in requestedReservations)
             {
-                // Calculate EndTime: ReservationDate.Date.Add(ReservationTime).Add(Duration)
                 var startTime = reservation.ReservationDate.Date.Add(reservation.ReservationTime);
                 var endTime = startTime.Add(reservation.Duration);
+                if (endTime.Kind == DateTimeKind.Unspecified)
+                    endTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(endTime, DateTimeKind.Local));
 
-                // If EndTime has passed, expire the reservation
                 if (endTime <= now)
                 {
                     try

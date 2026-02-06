@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ecommerce_desktop/models/chat_models.dart';
 import 'package:ecommerce_desktop/services/chat_service.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -255,34 +256,26 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Chat',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A4A4A),
-                  ),
-                ),
-                if (_totalUnread > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B7355),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      '$_totalUnread new',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+            ScreenTitleHeader(
+              title: 'Chat',
+              subtitle: 'Conversations with guests',
+              icon: Icons.chat_rounded,
+              trailing: _totalUnread > 0
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B7355),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                  ),
-              ],
+                      child: Text(
+                        '$_totalUnread new',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(height: 16),
             Expanded(

@@ -10,7 +10,9 @@ import 'package:ecommerce_desktop/providers/city_provider.dart';
 import 'package:ecommerce_desktop/providers/cuisine_type_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/providers/restaurant_gallery_provider.dart';
+import 'package:ecommerce_desktop/providers/validation_exception.dart';
 import 'package:ecommerce_desktop/models/restaurant_gallery_model.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -46,6 +48,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   String? _selectedImageDataUrl;
   List<RestaurantGalleryItem> _galleryImages = [];
   bool _galleryLoading = false;
+  Map<String, String> _userFormErrors = {};
+  Map<String, String> _restaurantFormErrors = {};
 
   final UserProvider _userProvider = UserProvider();
   final RestaurantProvider _restaurantProvider = RestaurantProvider();
@@ -263,6 +267,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const ScreenTitleHeader(
+                  title: 'Profile',
+                  subtitle: 'Account and restaurant settings',
+                  icon: Icons.person_rounded,
+                ),
+                const SizedBox(height: 24),
                 // Profile Information Section
                 _buildProfileInformationSection(),
                 const SizedBox(height: 24),
@@ -620,12 +630,17 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   TextField(
                     controller: firstNameController,
                     decoration: InputDecoration(
-                      hintText: 'First Name',
+                      hintText: 'First name',
+                      errorText: _userFormErrors['firstName'],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
                       fillColor: Colors.grey.shade100,
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
                     ),
                   ),
                 ],
@@ -648,12 +663,17 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   TextField(
                     controller: lastNameController,
                     decoration: InputDecoration(
-                      hintText: 'Last Name',
+                      hintText: 'Last name',
+                      errorText: _userFormErrors['lastName'],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
                       fillColor: Colors.grey.shade100,
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
                     ),
                   ),
                 ],
@@ -678,11 +698,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               controller: usernameController,
               decoration: InputDecoration(
                 hintText: 'Username',
+                errorText: _userFormErrors['username'],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade100,
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
               ),
             ),
           ],
@@ -691,8 +716,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Phone Number',
+const Text(
+                'Phone Number',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -703,12 +728,17 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             TextField(
               controller: phoneController,
               decoration: InputDecoration(
-                hintText: '+387 61 234 567',
+                hintText: 'e.g. +1 234 567 8900',
+                errorText: _userFormErrors['phoneNumber'],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade100,
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
               ),
             ),
           ],
@@ -730,11 +760,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               controller: emailController,
               decoration: InputDecoration(
                 hintText: 'email@example.com',
+                errorText: _userFormErrors['email'],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade100,
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
               ),
             ),
           ],
@@ -748,6 +783,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               onPressed: () {
                 setState(() {
                   _isEditUserMode = false;
+                  _userFormErrors = {};
                 });
               },
               style: TextButton.styleFrom(
@@ -768,6 +804,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             const SizedBox(width: 12),
             ElevatedButton.icon(
               onPressed: () async {
+                setState(() => _userFormErrors = {});
                 try {
                   final request = {
                     'firstName': firstNameController.text.trim(),
@@ -784,28 +821,40 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   };
 
                   await _userProvider.update(_currentUser.id, request);
-                  
-                  // Clear selected image after successful update
+
                   setState(() {
                     _selectedImageFile = null;
                     _selectedImageDataUrl = null;
+                    _userFormErrors = {};
                   });
-                  
-                  // Refresh data to get updated imageUrl
                   await _refreshData();
-                  
+
                   if (mounted) {
-                    setState(() {
-                      _isEditUserMode = false;
-                    });
+                    setState(() => _isEditUserMode = false);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile updated successfully')),
+                      const SnackBar(
+                        content: Text('User details have been successfully updated.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } on ValidationException catch (e) {
+                  setState(() => _userFormErrors = e.firstErrors);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.message),
+                        backgroundColor: Colors.orange,
+                      ),
                     );
                   }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error updating profile: $e')),
+                      SnackBar(
+                        content: Text('Error updating profile: ${e.toString().replaceFirst('Exception: ', '')}'),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                   }
                 }
@@ -1599,15 +1648,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Name
-                  _buildTextField('Name', nameController),
+                  _buildTextField('Restaurant Name', nameController, errorText: _restaurantFormErrors['name']),
                   const SizedBox(height: 16),
                   
                   // Description
-                  _buildTextField('Description', descriptionController, maxLines: 3),
+                  _buildTextField('Description', descriptionController, maxLines: 3, errorText: _restaurantFormErrors['description']),
                   const SizedBox(height: 16),
                   
                   // Address
-                  _buildTextField('Address', addressController),
+                  _buildTextField('Address', addressController, errorText: _restaurantFormErrors['address']),
                   const SizedBox(height: 16),
                   
                   // City
@@ -1623,6 +1672,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         selectedCityId = value;
                       });
                     },
+                    errorText: _restaurantFormErrors['cityId'],
                   ),
                   const SizedBox(height: 16),
                   
@@ -1668,11 +1718,11 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   const SizedBox(height: 16),
                   
                   // Phone Number
-                  _buildTextField('Phone Number', phoneController),
+                  _buildTextField('Phone Number', phoneController, errorText: _restaurantFormErrors['phoneNumber']),
                   const SizedBox(height: 16),
                   
                   // Email
-                  _buildTextField('Email', emailController),
+                  _buildTextField('Email', emailController, errorText: _restaurantFormErrors['email']),
                   const SizedBox(height: 16),
                   
                   // Cuisine Type
@@ -1688,6 +1738,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         selectedCuisineTypeId = value;
                       });
                     },
+                    errorText: _restaurantFormErrors['cuisineTypeId'],
                   ),
                   const SizedBox(height: 16),
                   
@@ -1828,6 +1879,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         onPressed: () {
                           setState(() {
                             _isEditRestaurantMode = false;
+                            _restaurantFormErrors = {};
                           });
                         },
                         style: TextButton.styleFrom(
@@ -1848,12 +1900,10 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       const SizedBox(width: 12),
                       ElevatedButton.icon(
                         onPressed: () async {
+                          setState(() => _restaurantFormErrors = {});
                           try {
-                            // Format times as HH:mm:ss
                             final openTimeStr = '${selectedOpenTime.hour.toString().padLeft(2, '0')}:${selectedOpenTime.minute.toString().padLeft(2, '0')}:00';
                             final closeTimeStr = '${selectedCloseTime.hour.toString().padLeft(2, '0')}:${selectedCloseTime.minute.toString().padLeft(2, '0')}:00';
-                            
-                            // Use selected latitude and longitude
                             double? latitude = selectedLatitude;
                             double? longitude = selectedLongitude;
 
@@ -1884,19 +1934,36 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
                             await _restaurantProvider.update(_currentRestaurant.id, request);
                             await _refreshData();
-                            
+
                             if (mounted) {
                               setState(() {
                                 _isEditRestaurantMode = false;
+                                _restaurantFormErrors = {};
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Restaurant updated successfully')),
+                                const SnackBar(
+                                  content: Text('Restaurant details have been successfully updated.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } on ValidationException catch (e) {
+                            setState(() => _restaurantFormErrors = e.firstErrors);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  backgroundColor: Colors.orange,
+                                ),
                               );
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error updating restaurant: $e')),
+                                SnackBar(
+                                  content: Text('Error updating restaurant: ${e.toString().replaceFirst('Exception: ', '')}'),
+                                  backgroundColor: Colors.red,
+                                ),
                               );
                             }
                           }
@@ -1920,7 +1987,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? errorText}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1937,11 +2004,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           controller: controller,
           maxLines: maxLines,
           decoration: InputDecoration(
+            errorText: errorText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             filled: true,
             fillColor: Colors.grey.shade100,
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
           ),
         ),
       ],
@@ -1952,8 +2024,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     String label,
     T? value,
     List<DropdownMenuItem<T>> items,
-    ValueChanged<T?> onChanged,
-  ) {
+    ValueChanged<T?> onChanged, {
+    String? errorText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1969,11 +2042,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         DropdownButtonFormField<T>(
           value: value,
           decoration: InputDecoration(
+            errorText: errorText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             filled: true,
             fillColor: Colors.grey.shade100,
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
           ),
           items: items,
           onChanged: onChanged,

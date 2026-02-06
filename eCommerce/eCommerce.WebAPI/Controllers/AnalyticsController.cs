@@ -1,5 +1,6 @@
 using eCommerce.Model;
 using eCommerce.Services;
+using eCommerce.WebAPI.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -14,6 +15,7 @@ namespace eCommerce.WebAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [MyAuthorization(requireAdmin: true, requireClient: false)]
     public class AnalyticsController : ControllerBase
     {
         private readonly eCommerceDbContext _context;

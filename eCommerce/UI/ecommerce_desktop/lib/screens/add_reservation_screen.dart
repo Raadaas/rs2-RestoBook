@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:ecommerce_desktop/providers/reservation_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/providers/reservation_provider.dart';
+import 'package:ecommerce_desktop/providers/validation_exception.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -32,6 +34,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
   bool _isLoading = false;
   bool _isSubmitting = false;
   String? _error;
+  Map<String, String> _fieldErrors = {};
 
   @override
   void initState() {
@@ -115,6 +118,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     setState(() {
       _isSubmitting = true;
       _error = null;
+      _fieldErrors = {};
     });
 
     try {
@@ -148,23 +152,43 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Reservation created successfully!'),
+            content: Text('Reservation has been successfully created.'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(true); // Return true to indicate success
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (e is ValidationException) {
+        final map = <String, String>{};
+        e.errors.forEach((k, v) {
+          if (v.isNotEmpty) map[k] = v.first;
+        });
+        setState(() {
+          _fieldErrors = map;
+          _error = null;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _fieldErrors = {};
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       setState(() {
@@ -177,22 +201,6 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5F0),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A4A4A)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Add Reservation',
-          style: TextStyle(
-            color: Color(0xFF4A4A4A),
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -202,12 +210,23 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    ScreenTitleHeader(
+                      title: 'Add Reservation',
+                      subtitle: 'Book a table for your guests',
+                      icon: Icons.calendar_today_rounded,
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF4A4A4A)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     // Table Dropdown
                     DropdownButtonFormField<int>(
                       value: _selectedTableId,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Table',
-                        border: OutlineInputBorder(),
+                        errorText: _fieldErrors['tableId'],
+                        border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -223,9 +242,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                         });
                       },
                       validator: (value) {
-                        if (value == null) {
-                          return 'Please select a table';
-                        }
+                        if (value == null) return 'Please select a table.';
                         return null;
                       },
                     ),
@@ -235,12 +252,13 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                     InkWell(
                       onTap: _selectDate,
                       child: InputDecorator(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Reservation Date',
-                          border: OutlineInputBorder(),
+                          errorText: _fieldErrors['reservationDate'],
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
-                          suffixIcon: Icon(Icons.calendar_today),
+                          suffixIcon: const Icon(Icons.calendar_today),
                         ),
                         child: Text(
                           DateFormat('yyyy-MM-dd').format(_selectedDate),
@@ -254,12 +272,13 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                     InkWell(
                       onTap: _selectTime,
                       child: InputDecorator(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Reservation Time',
-                          border: OutlineInputBorder(),
+                          errorText: _fieldErrors['reservationTime'],
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
-                          suffixIcon: Icon(Icons.access_time),
+                          suffixIcon: const Icon(Icons.access_time),
                         ),
                         child: Text(
                           _selectedTime.format(context),
@@ -295,21 +314,18 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                     // Number of Guests
                     TextFormField(
                       initialValue: _numberOfGuests.toString(),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Number of Guests',
-                        border: OutlineInputBorder(),
+                        errorText: _fieldErrors['numberOfGuests'],
+                        border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter number of guests';
-                        }
+                        if (value == null || value.isEmpty) return 'Please enter number of guests.';
                         final guests = int.tryParse(value);
-                        if (guests == null || guests <= 0) {
-                          return 'Please enter a valid number';
-                        }
+                        if (guests == null || guests <= 0 || guests > 50) return 'Number of guests must be between 1 and 50.';
                         return null;
                       },
                       onSaved: (value) {
@@ -327,9 +343,10 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                     // Special Requests
                     TextFormField(
                       initialValue: _specialRequests,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Special Requests (optional)',
-                        border: OutlineInputBorder(),
+                        errorText: _fieldErrors['specialRequests'],
+                        border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
                       ),

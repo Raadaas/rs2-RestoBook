@@ -11,6 +11,7 @@ namespace eCommerce.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -39,21 +40,23 @@ namespace eCommerce.WebAPI.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<ActionResult<UserResponse>> Create(UserUpsertRequest request)
+        public async Task<ActionResult<object>> Create([FromBody] UserUpsertRequest request)
         {
             var createdUser = await _userService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
+            return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, new
+            {
+                message = "User has been successfully registered.",
+                data = createdUser
+            });
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<UserResponse>> Update(int id, UserUpsertRequest request)
+        public async Task<ActionResult<object>> Update(int id, [FromBody] UserUpsertRequest request)
         {
             var updatedUser = await _userService.UpdateAsync(id, request);
-            
             if (updatedUser == null)
                 return NotFound();
-                
-            return updatedUser;
+            return Ok(new { message = "User details have been successfully updated.", data = updatedUser });
         }
 
         [HttpDelete("{id}")]
@@ -69,13 +72,11 @@ namespace eCommerce.WebAPI.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<UserResponse>> Login(UserLoginRequest request)
+        public async Task<ActionResult<UserResponse>> Login([FromBody] UserLoginRequest request)
         {
             var user = await _userService.AuthenticateAsync(request);
-            
             if (user == null)
-                return Unauthorized("Invalid username or password");
-            
+                return Unauthorized(new { message = "Invalid username or password." });
             return Ok(user);
         }
     }

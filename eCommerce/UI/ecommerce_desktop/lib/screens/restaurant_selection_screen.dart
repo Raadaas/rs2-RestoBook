@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/model/user.dart';
 import 'package:ecommerce_desktop/screens/add_restaurant_screen.dart';
 import 'package:ecommerce_desktop/screens/main_layout.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 
 const Color _brownLight = Color(0xFFB39B7A);
 
@@ -89,15 +90,12 @@ class _RestaurantSelectionScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Select Restaurant',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF333333),
-                      ),
+                    const ScreenTitleHeader(
+                      title: 'Select Restaurant',
+                      subtitle: 'Choose a restaurant to manage',
+                      icon: Icons.restaurant_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 24),
                     Container(
                       height: 3,
                       decoration: BoxDecoration(

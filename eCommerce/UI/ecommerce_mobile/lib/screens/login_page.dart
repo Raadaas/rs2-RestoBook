@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ecommerce_mobile/model/user.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/screens/main_screen.dart';
 import 'package:ecommerce_mobile/screens/register_page.dart';
@@ -56,10 +57,15 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = false);
 
       if (response.statusCode == 200) {
-        final userData = jsonDecode(response.body);
-        if (userData['id'] != null) {
-          AuthProvider.userId = userData['id'] as int;
+        final userData = jsonDecode(response.body) as Map<String, dynamic>;
+        final user = User.fromJson(userData);
+        if (!user.isClient) {
+          _showError(
+            "This account does not have access to the mobile app. Only client users can sign in here.",
+          );
+          return;
         }
+        AuthProvider.userId = user.id;
         AuthProvider.username = username;
         AuthProvider.password = password;
         Navigator.of(context).pushReplacement(

@@ -1,6 +1,7 @@
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
+using eCommerce.WebAPI.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [HttpPost]
+        [MyAuthorization(requireAdmin: true, requireClient: false)]
         public async Task<ActionResult<RestaurantGalleryResponse>> Insert([FromBody] RestaurantGalleryInsertRequest request)
         {
             var result = await _service.InsertAsync(request);
@@ -33,6 +35,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [MyAuthorization(requireAdmin: true, requireClient: false)]
         public async Task<IActionResult> Delete(int id)
         {
             try

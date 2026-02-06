@@ -39,6 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   String? _selectedImageDataUrl;
   final ImagePicker _picker = ImagePicker();
+  Map<String, String> _serverErrors = {};
 
   @override
   void dispose() {
@@ -98,11 +99,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final password = _passwordController.text;
     if (password != _confirmPasswordController.text) {
-      _showError("Passwords do not match");
+      setState(() => _serverErrors = {'confirmPassword': 'Passwords do not match.'});
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() { _isLoading = true; _serverErrors = {}; });
     try {
       final url = Uri.parse("${_baseUrl}users");
       final body = {
@@ -130,30 +131,53 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() => _isLoading = false);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final userData = jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
+        final userData = decoded is Map && decoded['data'] != null ? decoded['data'] as Map : decoded as Map;
+        final String successMessage = decoded is Map && decoded['message'] != null ? decoded['message'] as String : 'Registration successful.';
         if (userData['id'] != null) {
           AuthProvider.userId = userData['id'] as int;
         }
         AuthProvider.username = _usernameController.text.trim();
         AuthProvider.password = password;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+          );
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       } else {
-        final bodyStr = response.body;
-        String message = "Registration failed";
-        try {
-          final err = jsonDecode(bodyStr);
-          if (err['message'] != null) message = err['message'] as String;
-        } catch (_) {
-          if (bodyStr.isNotEmpty) message = bodyStr;
-        }
-        _showError(message);
+        _applyValidationErrors(response.body);
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
-      _showError("An error occurred: ${e.toString()}");
+      _showError("An error occurred. Please try again.");
     }
+  }
+
+  void _applyValidationErrors(String bodyStr) {
+    try {
+      final err = jsonDecode(bodyStr);
+      if (err is Map && err['errors'] != null && err['errors'] is Map) {
+        final errors = err['errors'] as Map;
+        final Map<String, String> next = {};
+        errors.forEach((key, value) {
+          if (value is List && value.isNotEmpty) {
+            next[key.toString()] = value.first.toString();
+          } else if (value is String) {
+            next[key.toString()] = value;
+          }
+        });
+        setState(() => _serverErrors = next);
+        return;
+      }
+      if (err is Map && err['message'] != null) {
+        _showError(err['message'] as String);
+        return;
+      }
+    } catch (_) {}
+    setState(() => _serverErrors = {'_form': bodyStr.isNotEmpty ? bodyStr : 'Registration failed. Please check your input.'});
   }
 
   void _showError(String message) {
@@ -173,7 +197,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDecoration(String hint, [String? errorText]) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
@@ -190,9 +214,15 @@ class _RegisterPageState extends State<RegisterPage> {
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: Colors.grey[300]!),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      errorText: errorText,
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -231,42 +261,46 @@ class _RegisterPageState extends State<RegisterPage> {
                     color: Colors.grey[600],
                   ),
                 ),
+                if (_serverErrors['_form'] != null) ...[
+                  Text(_serverErrors['_form']!, style: TextStyle(fontSize: 13, color: Colors.red[700])),
+                  const SizedBox(height: 16),
+                ],
                 const SizedBox(height: 24),
                 Text("First Name", style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _firstNameController,
-                  decoration: _inputDecoration("First name"),
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? "Required" : null,
+                  decoration: _inputDecoration("First name", _serverErrors['firstName']),
+                  validator: (v) => (v ?? '').trim().isEmpty ? "First name is required." : null,
                 ),
                 const SizedBox(height: 20),
                 Text("Last Name", style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: _inputDecoration("Last name"),
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? "Required" : null,
+                  decoration: _inputDecoration("Last name", _serverErrors['lastName']),
+                  validator: (v) => (v ?? '').trim().isEmpty ? "Last name is required." : null,
                 ),
                 const SizedBox(height: 20),
                 Text("Email", style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
-                  decoration: _inputDecoration("Email"),
+                  decoration: _inputDecoration("Email", _serverErrors['email']),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? "Required" : null,
+                  validator: (v) {
+                    if ((v ?? '').trim().isEmpty) return "Email address is required.";
+                    if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch((v ?? '').trim())) return "Enter a valid email address (e.g. user@domain.com).";
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 Text("Username", style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: _inputDecoration("Username"),
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? "Required" : null,
+                  decoration: _inputDecoration("Username", _serverErrors['username']),
+                  validator: (v) => (v ?? '').trim().isEmpty ? "Username is required." : null,
                 ),
                 const SizedBox(height: 20),
                 Text("Password", style: _labelStyle()),
@@ -274,7 +308,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  decoration: _inputDecoration("Password").copyWith(
+                  decoration: _inputDecoration("Password", _serverErrors['password']).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -287,8 +321,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   validator: (v) {
-                    if ((v ?? '').isEmpty) return "Required";
-                    if ((v ?? '').length < 6) return "At least 6 characters";
+                    if ((v ?? '').isEmpty) return "Password is required.";
+                    if ((v ?? '').length < 6) return "Password must be at least 6 characters.";
                     return null;
                   },
                 ),
@@ -298,7 +332,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  decoration: _inputDecoration("Confirm password").copyWith(
+                  decoration: _inputDecoration("Confirm password", _serverErrors['confirmPassword']).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
@@ -310,15 +344,21 @@ class _RegisterPageState extends State<RegisterPage> {
                           _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
-                  validator: (v) => (v ?? '').isEmpty ? "Required" : null,
+                  validator: (v) => (v ?? '').isEmpty ? "Please confirm password." : null,
                 ),
                 const SizedBox(height: 20),
-                Text("Phone Number", style: _labelStyle()),
+                Text("Phone Number (optional)", style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: _inputDecoration("Phone number"),
+                  decoration: _inputDecoration("e.g. +1 234 567 8900", _serverErrors['phoneNumber']),
                   keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    final s = (v ?? '').trim();
+                    if (s.isEmpty) return null;
+                    if (!RegExp(r'^[\+]?[0-9\s\-\(\)]{9,20}$').hasMatch(s)) return "Enter a valid phone number (e.g. +1 234 567 8900).";
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 Text("Profile Image", style: _labelStyle()),

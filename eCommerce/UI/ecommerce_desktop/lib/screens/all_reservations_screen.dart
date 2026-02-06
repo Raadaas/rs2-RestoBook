@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ecommerce_desktop/providers/dashboard_provider.dart';
 import 'package:ecommerce_desktop/services/dashboard_service.dart';
 import 'package:ecommerce_desktop/models/reservation_model.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:intl/intl.dart';
 
 class AllReservationsScreen extends StatefulWidget {
@@ -76,23 +77,15 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> with Sing
           // Header
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'All Reservations',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A4A4A),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _loadReservations,
-                  tooltip: 'Refresh',
-                ),
-              ],
+            child: ScreenTitleHeader(
+              title: 'All Reservations',
+              subtitle: 'View and manage reservations by status',
+              icon: Icons.event_note_rounded,
+              trailing: IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: _loadReservations,
+                tooltip: 'Refresh',
+              ),
             ),
           ),
           // Tabs

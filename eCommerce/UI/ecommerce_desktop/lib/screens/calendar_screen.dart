@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/models/reservation_model.dart';
 import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/providers/base_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -276,7 +277,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Date picker component
+            const ScreenTitleHeader(
+              title: 'Calendar',
+              subtitle: 'Daily reservations by table',
+              icon: Icons.calendar_month_rounded,
+            ),
+            const SizedBox(height: 24),
             _buildDatePicker(),
             const SizedBox(height: 24),
             // Day Timeline

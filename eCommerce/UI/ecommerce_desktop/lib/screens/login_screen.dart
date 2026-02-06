@@ -57,6 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final userData = jsonDecode(response.body);
         final user = User.fromJson(userData);
+        if (!user.isAdmin) {
+          _showError(
+            "This account does not have access to the desktop app. Only admin users can sign in here.",
+          );
+          return;
+        }
         AuthProvider.username = username;
         AuthProvider.password = password;
         AuthProvider.userId = user.id;

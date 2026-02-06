@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ecommerce_desktop/models/reward_model.dart';
 import 'package:ecommerce_desktop/providers/reward_provider.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 
 class CreateRewardScreen extends StatefulWidget {
   final int restaurantId;
@@ -120,36 +121,6 @@ class _CreateRewardScreenState extends State<CreateRewardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF4A4A4A), size: 20),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          isEdit ? 'Edit Reward' : 'Create New Reward',
-          style: const TextStyle(
-            color: Color(0xFF4A4A4A),
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -157,6 +128,16 @@ class _CreateRewardScreenState extends State<CreateRewardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              ScreenTitleHeader(
+                title: isEdit ? 'Edit Reward' : 'Create New Reward',
+                subtitle: isEdit ? 'Update reward details' : 'Add a new loyalty reward',
+                icon: Icons.card_giftcard_rounded,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF4A4A4A)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(height: 24),
               // Reward Details Card
               Container(
                 padding: const EdgeInsets.all(28),

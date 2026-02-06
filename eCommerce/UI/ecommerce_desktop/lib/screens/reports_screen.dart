@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_desktop/providers/reports_provider.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class ReportsScreen extends StatelessWidget {
@@ -50,13 +51,10 @@ class ReportsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Reports',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A4A4A),
-                      ),
+                    const ScreenTitleHeader(
+                      title: 'Reports',
+                      subtitle: 'Reservation analytics and insights',
+                      icon: Icons.analytics_rounded,
                     ),
                     const SizedBox(height: 24),
                     // Top Row: 4 KPI Cards

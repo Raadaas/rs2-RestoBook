@@ -1,10 +1,14 @@
+using System.Linq;
+using System.Text.Json;
 using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.WebAPI.Filters;
 using eCommerce.WebAPI.Converters;
+using eCommerce.WebAPI.Services;
 using Mapster;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
@@ -30,6 +34,9 @@ builder.Services.AddTransient<IRestaurantGalleryService, RestaurantGalleryServic
 // Register background service for auto-completing reservations
 builder.Services.AddHostedService<ReservationAutoCompleteService>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddMapster();
 // Configure database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=localhost;Database=eCommerceDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
@@ -47,6 +54,28 @@ builder.Services.AddControllers(x =>
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.Converters.Add(new TimeSpanConverter());
     });
+
+// Validation messages below fields: format { "errors": { "fieldName": ["Message"] } }, keys in camelCase
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = new Dictionary<string, string[]>();
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        foreach (var kv in context.ModelState)
+        {
+            if (kv.Value?.Errors.Count > 0)
+            {
+                var key = kv.Key;
+                if (key.Contains('.'))
+                    key = key.Split('.').Last();
+                var camelKey = jsonOptions.PropertyNamingPolicy?.ConvertName(key) ?? key;
+                errors[camelKey] = kv.Value.Errors.Select(e => e.ErrorMessage ?? "Invalid input.").ToArray();
+            }
+        }
+        return new BadRequestObjectResult(new { errors });
+    };
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

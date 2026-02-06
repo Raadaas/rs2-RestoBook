@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_desktop/providers/menu_item_provider.dart';
 import 'package:ecommerce_desktop/providers/special_offer_provider.dart';
+import 'package:ecommerce_desktop/providers/validation_exception.dart';
 import 'package:ecommerce_desktop/models/menu_item_model.dart';
 import 'package:ecommerce_desktop/models/special_offer_model.dart';
 import 'package:ecommerce_desktop/model/search_result.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
@@ -74,14 +76,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with title
-                  const Text(
-                    'Menu Management',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A4A4A),
-                    ),
+                  ScreenTitleHeader(
+                    title: 'Menu Management',
+                    subtitle: 'Menu items and daily specials',
+                    icon: Icons.restaurant_menu_rounded,
                   ),
                   const SizedBox(height: 24),
                   // Tabs
@@ -549,7 +547,8 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     final descriptionController = TextEditingController(text: item?.description ?? '');
     final priceController = TextEditingController(text: item?.price.toStringAsFixed(2) ?? '0.00');
     final imageUrlController = TextEditingController(text: item?.imageUrl ?? '');
-    
+    final Map<String, String> fieldErrors = {};
+
     // For storing selected file
     File? selectedImageFile;
     String? selectedImageDataUrl;
@@ -649,9 +648,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   const SizedBox(height: 4),
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Margherita Pizza',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Margherita Pizza',
+                      errorText: fieldErrors['name'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -663,9 +664,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   const SizedBox(height: 4),
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Mains, Starters, Desserts',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'Select category',
+                      errorText: fieldErrors['category'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                     items: categories.map((category) {
                       return DropdownMenuItem(
@@ -689,9 +692,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   TextField(
                     controller: descriptionController,
                     maxLines: 3,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Describe the dish...',
-                      border: OutlineInputBorder(),
+                      errorText: fieldErrors['description'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -704,9 +709,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   TextField(
                     controller: priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '0.00',
-                      border: OutlineInputBorder(),
+                      errorText: fieldErrors['price'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                     onTap: () {
                       if (priceController.text == '0.00') {
@@ -898,12 +905,12 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
             ),
             ElevatedButton.icon(
               onPressed: () async {
+                setState(() => fieldErrors.clear());
                 if (nameController.text.isEmpty || selectedCategory == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all required fields'),
-                    ),
-                  );
+                  setState(() {
+                    if (nameController.text.isEmpty) fieldErrors['name'] = 'Item name is required.';
+                    if (selectedCategory == null) fieldErrors['category'] = 'Please select a category.';
+                  });
                   return;
                 }
 
@@ -949,7 +956,21 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                     provider.loadMenuItems(widget.restaurantId);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(item == null ? 'Menu item added successfully' : 'Menu item updated successfully'),
+                        content: Text(item == null ? 'Menu item has been successfully added.' : 'Menu item has been successfully updated.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } on ValidationException catch (e) {
+                  setState(() {
+                    fieldErrors.clear();
+                    fieldErrors.addAll(e.firstErrors);
+                  });
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.message),
+                        backgroundColor: Colors.orange,
                       ),
                     );
                   }
@@ -959,7 +980,8 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Error: ${e.toString()}'),
+                        content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+                        backgroundColor: Colors.red,
                         duration: const Duration(seconds: 5),
                       ),
                     );
@@ -1180,7 +1202,8 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     final titleController = TextEditingController(text: special?.title ?? '');
     final descriptionController = TextEditingController(text: special?.description ?? '');
     final priceController = TextEditingController(text: special?.price.toStringAsFixed(2) ?? '0.00');
-    
+    final Map<String, String> fieldErrors = {};
+
     DateTime? validFrom = special?.validFrom ?? DateTime.now();
     DateTime? validTo = special?.validTo ?? DateTime.now().add(const Duration(days: 30));
 
@@ -1213,9 +1236,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   const SizedBox(height: 4),
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Weekend Brunch Special',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Weekend Brunch Special',
+                      errorText: fieldErrors['title'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1228,9 +1253,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   TextField(
                     controller: descriptionController,
                     maxLines: 3,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Describe the special...',
-                      border: OutlineInputBorder(),
+                      errorText: fieldErrors['description'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1243,9 +1270,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   TextField(
                     controller: priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '0.00',
-                      border: OutlineInputBorder(),
+                      errorText: fieldErrors['price'],
+                      border: const OutlineInputBorder(),
+                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                     ),
                     onTap: () {
                       if (priceController.text == '0.00') {
@@ -1278,9 +1307,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
+                      decoration: InputDecoration(
+                        errorText: fieldErrors['validFrom'],
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                       ),
                       child: Text(
                         validFrom != null
@@ -1311,9 +1342,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
+                      decoration: InputDecoration(
+                        errorText: fieldErrors['validTo'],
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                        errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
                       ),
                       child: Text(
                         validTo != null
@@ -1333,12 +1366,13 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
             ),
             ElevatedButton.icon(
               onPressed: () async {
+                setState(() => fieldErrors.clear());
                 if (titleController.text.isEmpty || validFrom == null || validTo == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all required fields'),
-                    ),
-                  );
+                  setState(() {
+                    if (titleController.text.isEmpty) fieldErrors['title'] = 'Title is required.';
+                    if (validFrom == null) fieldErrors['validFrom'] = 'Valid from date is required.';
+                    if (validTo == null) fieldErrors['validTo'] = 'Valid to date is required.';
+                  });
                   return;
                 }
 
@@ -1368,7 +1402,21 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                     provider.loadSpecialOffers(widget.restaurantId);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(special == null ? 'Special added successfully' : 'Special updated successfully'),
+                        content: Text(special == null ? 'Special has been successfully added.' : 'Special has been successfully updated.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } on ValidationException catch (e) {
+                  setState(() {
+                    fieldErrors.clear();
+                    fieldErrors.addAll(e.firstErrors);
+                  });
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.message),
+                        backgroundColor: Colors.orange,
                       ),
                     );
                   }
@@ -1378,7 +1426,8 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Error: ${e.toString()}'),
+                        content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+                        backgroundColor: Colors.red,
                         duration: const Duration(seconds: 5),
                       ),
                     );

@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/screens/table_layout_screen.dart';
 import 'package:ecommerce_desktop/screens/add_reservation_screen.dart';
 import 'package:ecommerce_desktop/services/dashboard_service.dart';
 import 'package:ecommerce_desktop/models/reservation_model.dart';
+import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
@@ -56,18 +57,11 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Dashboard',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4A4A4A),
-                        ),
-                      ),
-                      ElevatedButton.icon(
+                  ScreenTitleHeader(
+                    title: 'Dashboard',
+                    subtitle: "Today's overview and reservations",
+                    icon: Icons.dashboard_rounded,
+                    trailing: ElevatedButton.icon(
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
@@ -93,7 +87,6 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
                   ),
                   const SizedBox(height: 24),
                   // Top Row: Today's Reservations and Current Occupancy
