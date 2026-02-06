@@ -2,11 +2,13 @@ import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/screens/login_page.dart';
 import 'package:ecommerce_mobile/providers/favorite_provider.dart';
 import 'package:ecommerce_mobile/providers/loyalty_provider.dart';
+import 'package:ecommerce_mobile/providers/notification_provider.dart';
 import 'package:ecommerce_mobile/providers/review_provider.dart';
 import 'package:ecommerce_mobile/screens/favorite_restaurants_screen.dart';
 import 'package:ecommerce_mobile/screens/my_reviews_screen.dart';
 import 'package:ecommerce_mobile/screens/loyalty_rewards_screen.dart';
 import 'package:ecommerce_mobile/screens/help_support_screen.dart';
+import 'package:ecommerce_mobile/screens/notifications_screen.dart';
 import 'package:ecommerce_mobile/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load({bool showLoading = true}) async {
     if (showLoading) setState(() => _loading = true);
+    context.read<NotificationProvider>().load();
     final pts = await _loyaltyProvider.getMyPoints();
     final fav = context.read<FavoriteProvider>();
     if (!fav.isLoaded) await fav.load();
@@ -152,6 +155,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        _listTile(
+                          icon: Icons.notifications_outlined,
+                          label: 'Notifications',
+                          count: context.watch<NotificationProvider>().unreadCount > 0 ? context.watch<NotificationProvider>().unreadCount : null,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationsScreen(),
+                              ),
+                            );
+                            _load(showLoading: false);
+                          },
+                        ),
                         _listTile(
                           icon: Icons.favorite_border,
                           label: 'Favorite Restaurants',

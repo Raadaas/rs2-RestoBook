@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.Json;
+using EasyNetQ;
 using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.WebAPI.Filters;
@@ -30,6 +31,20 @@ builder.Services.AddTransient<IChatService, ChatService>();
 builder.Services.AddTransient<ILoyaltyService, LoyaltyService>();
 builder.Services.AddTransient<IRewardService, RewardService>();
 builder.Services.AddTransient<IRestaurantGalleryService, RestaurantGalleryService>();
+builder.Services.AddTransient<INotificationService, NotificationService>();
+
+// RabbitMQ: publish reservation status changes for user notifications
+var rabbitMqConnectionString = builder.Configuration["RabbitMQ"];
+if (!string.IsNullOrWhiteSpace(rabbitMqConnectionString))
+{
+    var bus = RabbitHutch.CreateBus(rabbitMqConnectionString);
+    builder.Services.AddSingleton(bus);
+    builder.Services.AddSingleton<IReservationNotificationPublisher, RabbitMqReservationNotificationPublisher>();
+}
+else
+{
+    builder.Services.AddSingleton<IReservationNotificationPublisher, NoOpReservationNotificationPublisher>();
+}
 
 // Register background service for auto-completing reservations
 builder.Services.AddHostedService<ReservationAutoCompleteService>();

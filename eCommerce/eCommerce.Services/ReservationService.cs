@@ -1,10 +1,12 @@
 using eCommerce.Model;
+using eCommerce.Model.Messages;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,10 +16,19 @@ namespace eCommerce.Services
     public class ReservationService : BaseCRUDService<ReservationResponse, ReservationSearchObject, Database.Reservation, ReservationUpsertRequest, ReservationUpsertRequest>, IReservationService
     {
         private readonly ILoyaltyService _loyaltyService;
+        private readonly IReservationNotificationPublisher _notificationPublisher;
+        private readonly ILogger<ReservationService> _logger;
 
-        public ReservationService(eCommerceDbContext context, IMapper mapper, ILoyaltyService loyaltyService) : base(context, mapper)
+        public ReservationService(
+            eCommerceDbContext context,
+            IMapper mapper,
+            ILoyaltyService loyaltyService,
+            IReservationNotificationPublisher notificationPublisher,
+            ILogger<ReservationService> logger) : base(context, mapper)
         {
             _loyaltyService = loyaltyService;
+            _notificationPublisher = notificationPublisher;
+            _logger = logger;
         }
 
         protected override async Task BeforeInsert(Database.Reservation entity, ReservationUpsertRequest request)
@@ -613,6 +624,9 @@ namespace eCommerce.Services
             entity.Confirm();
             await _context.SaveChangesAsync();
 
+            await SaveNotificationToDatabaseAsync(entity, "Confirmed", null);
+            _ = PublishStatusChangedAsync(entity, ReservationState.Requested.ToString(), ReservationState.Confirmed.ToString(), cancellationReason: null);
+
             // Reload with navigation properties
             entity = await _context.Reservations
                 .Include(r => r.User)
@@ -636,8 +650,12 @@ namespace eCommerce.Services
                 throw new InvalidOperationException($"Reservation with ID {id} not found.");
             }
 
+            var previousState = entity.State;
             entity.Cancel(reason);
             await _context.SaveChangesAsync();
+
+            await SaveNotificationToDatabaseAsync(entity, "Cancelled", entity.CancellationReason);
+            _ = PublishStatusChangedAsync(entity, previousState.ToString(), ReservationState.Cancelled.ToString(), entity.CancellationReason);
 
             // Reload with navigation properties
             entity = await _context.Reservations
@@ -666,6 +684,9 @@ namespace eCommerce.Services
             await _loyaltyService.AddPointsForCompletedReservationAsync(entity);
             await _context.SaveChangesAsync();
 
+            await SaveNotificationToDatabaseAsync(entity, "Completed", null);
+            _ = PublishStatusChangedAsync(entity, ReservationState.Confirmed.ToString(), ReservationState.Completed.ToString(), cancellationReason: null);
+
             // Reload with navigation properties
             entity = await _context.Reservations
                 .Include(r => r.User)
@@ -674,6 +695,79 @@ namespace eCommerce.Services
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             return MapToResponse(entity);
+        }
+
+        private async Task SaveNotificationToDatabaseAsync(Database.Reservation entity, string newState, string? cancellationReason)
+        {
+            var (title, message) = BuildNotificationText(
+                entity.Restaurant?.Name ?? "",
+                entity.ReservationDate,
+                entity.ReservationTime,
+                newState,
+                cancellationReason);
+            _context.Notifications.Add(new Database.Notification
+            {
+                UserId = entity.UserId,
+                Type = "ReservationStatusChanged",
+                Title = title,
+                Message = message,
+                RelatedReservationId = entity.Id,
+                IsRead = false,
+                SentAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+        }
+
+        private static (string Title, string Message) BuildNotificationText(string restaurantName, DateTime reservationDate, TimeSpan reservationTime, string newState, string? cancellationReason)
+        {
+            var dateStr = reservationDate.ToString("yyyy-MM-dd");
+            var timeStr = $"{reservationTime.Hours:D2}:{reservationTime.Minutes:D2}";
+            var place = string.IsNullOrWhiteSpace(restaurantName) ? "your reservation" : restaurantName;
+            return newState switch
+            {
+                "Confirmed" => (
+                    "Reservation confirmed",
+                    $"Your reservation at {place} on {dateStr} at {timeStr} has been confirmed."),
+                "Cancelled" => (
+                    "Reservation cancelled",
+                    string.IsNullOrWhiteSpace(cancellationReason)
+                        ? $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled."
+                        : $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled. Reason: {cancellationReason}"),
+                "Completed" => (
+                    "Reservation completed",
+                    $"Your reservation at {place} on {dateStr} at {timeStr} has been marked as completed. Thank you!"),
+                _ => (
+                    "Reservation update",
+                    $"Your reservation at {place} on {dateStr} at {timeStr} is now {newState}.")
+            };
+        }
+
+        private Task PublishStatusChangedAsync(Database.Reservation entity, string previousState, string newState, string? cancellationReason)
+        {
+            var message = new ReservationStatusChangedMessage
+            {
+                ReservationId = entity.Id,
+                UserId = entity.UserId,
+                PreviousState = previousState,
+                NewState = newState,
+                RestaurantName = entity.Restaurant?.Name ?? "",
+                ReservationDate = entity.ReservationDate,
+                ReservationTime = entity.ReservationTime,
+                CancellationReason = cancellationReason
+            };
+            return PublishMessageInBackgroundAsync(message);
+        }
+
+        private async Task PublishMessageInBackgroundAsync(ReservationStatusChangedMessage message)
+        {
+            try
+            {
+                await _notificationPublisher.PublishReservationStatusChangedAsync(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to publish reservation status change for reservation {ReservationId}. User notification may not be sent.", message.ReservationId);
+            }
         }
     }
 }

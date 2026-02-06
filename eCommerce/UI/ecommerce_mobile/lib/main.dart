@@ -6,6 +6,7 @@ import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/providers/favorite_provider.dart';
 import 'package:ecommerce_mobile/providers/review_provider.dart';
 import 'package:ecommerce_mobile/providers/restaurant_gallery_provider.dart';
+import 'package:ecommerce_mobile/providers/notification_provider.dart';
 import 'package:ecommerce_mobile/screens/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,8 @@ void main() {
         create: (context) => ReviewProvider()),
     Provider<RestaurantGalleryProvider>(
         create: (_) => RestaurantGalleryProvider()),
+    ChangeNotifierProvider<NotificationProvider>(
+        create: (_) => NotificationProvider()),
   ], child: const MyLoginApp()));
 }
 
