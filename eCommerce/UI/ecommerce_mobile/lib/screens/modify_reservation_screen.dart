@@ -4,34 +4,34 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
+import 'package:ecommerce_mobile/model/reservation.dart';
 import 'package:http/http.dart' as http;
 import 'package:ecommerce_mobile/app_styles.dart';
 
 const Color _brown = Color(0xFF8B7355);
 
-class BookReservationScreen extends StatefulWidget {
-  final int restaurantId;
-  final String restaurantName;
+class ModifyReservationScreen extends StatefulWidget {
+  final Reservation reservation;
 
-  const BookReservationScreen({
+  const ModifyReservationScreen({
     super.key,
-    required this.restaurantId,
-    required this.restaurantName,
+    required this.reservation,
   });
 
   @override
-  State<BookReservationScreen> createState() => _BookReservationScreenState();
+  State<ModifyReservationScreen> createState() => _ModifyReservationScreenState();
 }
 
-class _BookReservationScreenState extends State<BookReservationScreen> {
+class _ModifyReservationScreenState extends State<ModifyReservationScreen> {
   List<Map<String, dynamic>> _tables = [];
   int? _selectedTableId;
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay(hour: 19, minute: 0);
-  int _numberOfGuests = 2;
-  String _selectedDuration = '02:00:00';
-  String _specialRequests = '';
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
+  late int _numberOfGuests;
+  late String _selectedDuration;
+  late String _specialRequests;
   bool _loading = true;
+  late TextEditingController _specialRequestsController;
 
   static const Map<String, String> _durationOptions = {
     '1 minute': '00:01:00',
@@ -45,17 +45,53 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
   static String get _baseUrl =>
       const String.fromEnvironment("baseUrl", defaultValue: "http://10.0.2.2:5121/api/");
 
+  static String _parseDurationToOption(String s) {
+    final parts = s.split(':');
+    if (parts.isEmpty) return '02:00:00';
+    final h = int.tryParse(parts[0]) ?? 0;
+    if (h <= 0) return '00:01:00';
+    if (h == 1) return '01:00:00';
+    if (h <= 2) return '02:00:00';
+    if (h <= 3) return '03:00:00';
+    return '06:00:00';
+  }
+
   @override
   void initState() {
     super.initState();
+    _initFromReservation();
+    _specialRequestsController = TextEditingController(text: _specialRequests);
     _loadTables();
+  }
+
+  @override
+  void dispose() {
+    _specialRequestsController.dispose();
+    super.dispose();
+  }
+
+  void _initFromReservation() {
+    final r = widget.reservation;
+    _selectedDate = r.reservationDate;
+    final timeParts = r.reservationTime.split(':');
+    _selectedTime = TimeOfDay(
+      hour: int.parse(timeParts[0]),
+      minute: timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+    );
+    _numberOfGuests = r.numberOfGuests;
+    final dur = r.duration;
+    _selectedDuration = _durationOptions.values.contains(dur)
+        ? dur
+        : _parseDurationToOption(dur);
+    _specialRequests = r.specialRequests ?? '';
+    _selectedTableId = r.tableId;
   }
 
   Future<void> _loadTables() async {
     setState(() => _loading = true);
     try {
       final provider = context.read<ReservationProvider>();
-      final url = Uri.parse("${_baseUrl}tables?restaurantId=${widget.restaurantId}");
+      final url = Uri.parse("${_baseUrl}tables?restaurantId=${widget.reservation.restaurantId}");
       final response = await http.get(url, headers: provider.createHeaders());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -64,6 +100,9 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
         if (mounted) {
           setState(() {
             _tables = tables;
+            if (_selectedTableId != null && !tables.any((t) => t['id'] == _selectedTableId)) {
+              _selectedTableId = tables.isNotEmpty ? (tables.first['id'] as int?) : null;
+            }
             _loading = false;
           });
         }
@@ -84,10 +123,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
   }
 
   Future<void> _submit() async {
-    final userId = AuthProvider.userId;
+    final userId = AuthProvider.userId ?? widget.reservation.userId;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to make a reservation')),
+        const SnackBar(content: Text('Please log in to modify a reservation')),
       );
       return;
     }
@@ -110,7 +149,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
       );
       final request = {
         'userId': userId,
-        'restaurantId': widget.restaurantId,
+        'restaurantId': widget.reservation.restaurantId,
         'tableId': _selectedTableId,
         'reservationDate': reservationDateTime.toIso8601String(),
         'reservationTime': reservationTime,
@@ -118,11 +157,11 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
         'numberOfGuests': _numberOfGuests,
         if (_specialRequests.isNotEmpty) 'specialRequests': _specialRequests,
       };
-      await context.read<ReservationProvider>().createReservation(request);
+      await context.read<ReservationProvider>().updateReservation(widget.reservation.id, request);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Reservation requested successfully!'),
+            content: Text('Reservation updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -146,7 +185,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
         backgroundColor: Colors.grey[50],
         elevation: 0,
         foregroundColor: const Color(0xFF333333),
-        title: const Text('Book a Table', style: kScreenTitleStyle),
+        title: const Text('Modify Reservation', style: kScreenTitleStyle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(19),
           child: Padding(
@@ -170,7 +209,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
                       border: Border.all(color: _brown.withOpacity(0.2)),
                     ),
                     child: Text(
-                      widget.restaurantName,
+                      widget.reservation.restaurantName,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -222,7 +261,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Confirm Reservation'),
+                            : const Text('Save Changes'),
                       ),
                     ),
                   ],
@@ -530,6 +569,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
 
   Widget _buildSpecialRequestsField() {
     return TextField(
+      controller: _specialRequestsController,
       onChanged: (v) => setState(() => _specialRequests = v),
       maxLines: 3,
       decoration: InputDecoration(

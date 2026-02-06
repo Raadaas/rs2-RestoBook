@@ -21,10 +21,10 @@ namespace eCommerce.Services.Database
         [ForeignKey("RestaurantId")]
         public Restaurant Restaurant { get; set; } = null!;
         
-        public int TableId { get; set; }
+        public int? TableId { get; set; }
         
         [ForeignKey("TableId")]
-        public Table Table { get; set; } = null!;
+        public Table? Table { get; set; }
         
         public DateTime ReservationDate { get; set; }
         
@@ -44,9 +44,6 @@ namespace eCommerce.Services.Database
         
         [MaxLength(500)]
         public string? SpecialRequests { get; set; }
-        
-        [MaxLength(200)]
-        public string? QRCode { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         

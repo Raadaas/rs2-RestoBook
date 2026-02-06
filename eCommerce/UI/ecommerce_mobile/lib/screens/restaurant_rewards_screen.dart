@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/reward.dart';
 import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/providers/loyalty_provider.dart';
@@ -85,6 +86,7 @@ class _RestaurantRewardsScreenState extends State<RestaurantRewardsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,14 +103,9 @@ class _RestaurantRewardsScreenState extends State<RestaurantRewardsScreen> {
                     constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    widget.restaurant.name,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
+                  Text(widget.restaurant.name, style: kScreenTitleStyle),
+                  const SizedBox(height: 8),
+                  kScreenTitleUnderline(margin: EdgeInsets.zero),
                   const SizedBox(height: 4),
                   Text(
                     'Loyalty Rewards',

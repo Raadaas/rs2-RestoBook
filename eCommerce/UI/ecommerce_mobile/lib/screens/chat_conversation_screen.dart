@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ecommerce_mobile/model/chat_models.dart';
 import 'package:ecommerce_mobile/providers/chat_provider.dart';
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -196,9 +197,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         foregroundColor: const Color(0xFF4A4A4A),
         elevation: 0,
         titleSpacing: 0,
@@ -207,12 +208,16 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           children: [
             Text(
               widget.conversation?.restaurantName ?? widget.restaurantName ?? 'Restaurant',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: kScreenTitleStyle,
             ),
           ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(19),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: kScreenTitleUnderline(margin: EdgeInsets.zero),
+          ),
         ),
       ),
       body: Column(

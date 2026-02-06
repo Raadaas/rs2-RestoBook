@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
 
 class NotImplementedScreen extends StatelessWidget {
@@ -8,10 +9,19 @@ class NotImplementedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(title),
-        backgroundColor: const Color(0xFF8B7355),
-        foregroundColor: Colors.white,
+        title: Text(title, style: kScreenTitleStyle),
+        backgroundColor: Colors.grey[50],
+        elevation: 0,
+        foregroundColor: const Color(0xFF333333),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(19),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: kScreenTitleUnderline(margin: EdgeInsets.zero),
+          ),
+        ),
       ),
       body: Center(
         child: Text(

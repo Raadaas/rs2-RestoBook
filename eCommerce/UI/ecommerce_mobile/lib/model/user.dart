@@ -9,7 +9,6 @@ class User {
   final DateTime? lastLoginAt;
   final DateTime? passwordChangedAt;
   final String? phoneNumber;
-  final int? cityId;
   final String? imageUrl;
 
   User({
@@ -23,7 +22,6 @@ class User {
     this.lastLoginAt,
     this.passwordChangedAt,
     this.phoneNumber,
-    this.cityId,
     this.imageUrl,
   });
 
@@ -45,7 +43,6 @@ class User {
           ? DateTime.parse(json['passwordChangedAt'] as String)
           : null,
       phoneNumber: json['phoneNumber'] as String?,
-      cityId: json['cityId'] as int?,
       imageUrl: json['imageUrl'] as String?,
     );
   }

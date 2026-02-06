@@ -1,9 +1,7 @@
-import 'dart:convert';
-import 'package:ecommerce_desktop/model/user.dart';
-import 'package:ecommerce_desktop/providers/auth_provider.dart';
-import 'package:ecommerce_desktop/screens/restaurant_selection_screen.dart';
+import 'package:ecommerce_desktop/screens/login_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+
+const Color _brown = Color(0xFF8B7355);
 
 void main() {
   runApp(const MyLoginApp());
@@ -16,174 +14,19 @@ class MyLoginApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: Colors.blue, primary: Colors.red),
-      ),
-      home: LoginScreen(),
-    );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 499),
-          child: Card(
-              child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Image.network(
-                  "https://fit.ba/content/763cbb87-718d-4eca-a991-343858daf424",
-                  width: 150,
-                  height: 150,
-                ),
-                TextField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                      hintText: 'Username', icon: Icon(Icons.person)),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: passwordController,
-                  decoration: const InputDecoration(
-                    hintText: 'Password',
-                    icon: Icon(Icons.password),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    final username = usernameController.text.trim();
-                    final password = passwordController.text.trim();
-                    
-                    if (username.isEmpty || password.isEmpty) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Error"),
-                          content: const Text("Please enter both username and password"),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("OK")
-                            )
-                          ],
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    try {
-                      // Prepare login request
-                      final baseUrl = const String.fromEnvironment(
-                        "baseUrl",
-                        defaultValue: "http://localhost:5121/api/"
-                      );
-                      final url = Uri.parse("${baseUrl}users/login");
-                      
-                      final requestBody = jsonEncode({
-                        'username': username,
-                        'password': password,
-                      });
-                      
-                      final response = await http.post(
-                        url,
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: requestBody,
-                      );
-                      
-                      if (response.statusCode == 200) {
-                        // Login successful
-                        final userData = jsonDecode(response.body);
-                        final user = User.fromJson(userData);
-                        
-                        // Store credentials for future API calls
-                        AuthProvider.username = username;
-                        AuthProvider.password = password;
-                        AuthProvider.userId = user.id;
-                        
-                        // Navigate to restaurant selection
-                        if (context.mounted) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RestaurantSelectionScreen(user: user)
-                            )
-                          );
-                        }
-                      } else if (response.statusCode == 401) {
-                        // Invalid credentials
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text("Login Failed"),
-                              content: const Text("Invalid username or password"),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("OK")
-                                )
-                              ],
-                            ),
-                          );
-                        }
-                      } else {
-                        // Other error
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text("Error"),
-                              content: Text("Login failed: ${response.statusCode}"),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("OK")
-                                )
-                              ],
-                            ),
-                          );
-                        }
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Error"),
-                            content: Text("An error occurred: ${e.toString()}"),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("OK")
-                              )
-                            ],
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Login'),
-                )
-              ],
-            ),
-          )),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: _brown,
+          primary: _brown,
+          brightness: Brightness.light,
+          surface: Colors.white,
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
+      home: const LoginScreen(),
     );
   }
 }

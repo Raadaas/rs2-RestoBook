@@ -123,13 +123,13 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F0),
+      backgroundColor: Colors.white,
       body: Row(
         children: [
           // Sidebar
           Container(
             width: 280,
-            color: const Color(0xFFF5F5F0),
+            color: Colors.white,
             child: Column(
               children: [
                 const SizedBox(height: 20),

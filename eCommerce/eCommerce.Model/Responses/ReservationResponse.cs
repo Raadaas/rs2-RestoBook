@@ -17,7 +17,6 @@ namespace eCommerce.Model.Responses
         public int NumberOfGuests { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? SpecialRequests { get; set; }
-        public string? QRCode { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? ConfirmedAt { get; set; }
         public DateTime? CancelledAt { get; set; }

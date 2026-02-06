@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/model/cuisine_type.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
@@ -221,6 +222,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           children: [
@@ -356,9 +358,16 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Text(
-              'Recent Restaurants',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recent Restaurants',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 8),
+                kScreenTitleUnderline(margin: EdgeInsets.zero),
+              ],
             ),
           ),
           Expanded(
@@ -604,10 +613,17 @@ class _SearchScreenState extends State<SearchScreen> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Filters',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Filters', style: kScreenTitleStyle),
+                          const SizedBox(height: 8),
+                          kScreenTitleUnderline(margin: EdgeInsets.zero),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:ecommerce_desktop/screens/login_screen.dart';
 import 'package:ecommerce_desktop/models/restaurant_model.dart';
+import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/model/user.dart';
+import 'package:ecommerce_desktop/screens/add_restaurant_screen.dart';
 import 'package:ecommerce_desktop/screens/main_layout.dart';
+
+const Color _brownLight = Color(0xFFB39B7A);
 
 class RestaurantSelectionScreen extends StatefulWidget {
   final User user;
@@ -59,6 +64,16 @@ class _RestaurantSelectionScreenState
     );
   }
 
+  void _handleLogout() {
+    AuthProvider.username = null;
+    AuthProvider.password = null;
+    AuthProvider.userId = null;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,27 +85,52 @@ class _RestaurantSelectionScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.restaurant,
-                size: 80,
-                color: Color(0xFF8B7355),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Select Restaurant',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4A4A4A),
+              IntrinsicWidth(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Select Restaurant',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: _brownLight,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Welcome, ${widget.user.firstName} ${widget.user.lastName}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Welcome, ${widget.user.firstName} ${widget.user.lastName}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _handleLogout,
+                    icon: Icon(Icons.logout, size: 18, color: Colors.red[700]),
+                    label: Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 40),
               if (_isLoading)
@@ -111,20 +151,52 @@ class _RestaurantSelectionScreenState
                   ],
                 )
               else if (_restaurants.isEmpty)
-                const Card(
+                Card(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'No restaurants found. Please contact administrator.',
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'No restaurants found.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final created = await Navigator.push<Restaurant>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddRestaurantScreen(user: widget.user),
+                              ),
+                            );
+                            if (created != null && mounted) {
+                              _loadRestaurants();
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add your restaurant now'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF8B7355),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
               else
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _restaurants.length,
-                    itemBuilder: (context, index) {
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _restaurants.length,
+                          itemBuilder: (context, index) {
                       final restaurant = _restaurants[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -220,6 +292,30 @@ class _RestaurantSelectionScreenState
                         ),
                       );
                     },
+                          ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final created = await Navigator.push<Restaurant>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddRestaurantScreen(user: widget.user),
+                            ),
+                          );
+                          if (created != null && mounted) {
+                            _loadRestaurants();
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const Text('Add another restaurant'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF8B7355),
+                          side: const BorderSide(color: Color(0xFF8B7355)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],

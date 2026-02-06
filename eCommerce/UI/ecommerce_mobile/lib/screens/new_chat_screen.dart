@@ -2,6 +2,7 @@ import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/providers/chat_provider.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/screens/chat_conversation_screen.dart';
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
 
 class NewChatScreen extends StatefulWidget {
@@ -117,14 +118,18 @@ class _NewChatScreenState extends State<NewChatScreen> {
     final q = _searchController.text.trim();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         elevation: 0,
-        foregroundColor: const Color(0xFF4A4A4A),
-        title: const Text(
-          'New message',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        foregroundColor: const Color(0xFF333333),
+        title: const Text('New message', style: kScreenTitleStyle),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(19),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: kScreenTitleUnderline(margin: EdgeInsets.zero),
+          ),
         ),
       ),
       body: Column(

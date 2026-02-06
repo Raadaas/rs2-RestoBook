@@ -408,7 +408,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _currentUser.roleName ?? 'User',
+                          _currentUser.isAdmin ? 'Admin' : (_currentUser.isClient ? 'Client' : 'User'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -446,23 +446,6 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           'Phone Number',
           _currentUser.phoneNumber ?? 'Not provided',
         ),
-        if (_currentUser.cityId != null) ...[
-          const SizedBox(height: 16),
-          FutureBuilder<City?>(
-            key: ValueKey(_currentUser.cityId),
-            future: _cityProvider.getById(_currentUser.cityId!),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                return _buildInfoRow(
-                  Icons.location_on,
-                  'City',
-                  snapshot.data!.name,
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
       ],
     );
   }
@@ -508,17 +491,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     final emailController = TextEditingController(text: _currentUser.email);
     final phoneController = TextEditingController(text: _currentUser.phoneNumber ?? '');
 
-    return FutureBuilder<SearchResult<City>>(
-      future: _cityProvider.get(filter: {'isActive': true}),
-      builder: (context, snapshot) {
-        List<City> cities = [];
-        if (snapshot.hasData) {
-          cities = snapshot.data!.items ?? [];
-        }
-
-        int? selectedCityId = _currentUser.cityId;
-
-        return StatefulBuilder(
+    return StatefulBuilder(
           builder: (context, setStateLocal) {
             return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,7 +577,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _currentUser.roleName ?? 'User',
+                          _currentUser.isAdmin ? 'Admin' : (_currentUser.isClient ? 'Client' : 'User'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -766,42 +739,6 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'City',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF4A4A4A),
-              ),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              value: selectedCityId,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade100,
-              ),
-              items: cities.map((city) {
-                return DropdownMenuItem(
-                  value: city.id,
-                  child: Text(city.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setStateLocal(() {
-                  selectedCityId = value;
-                });
-              },
-            ),
-          ],
-        ),
         const SizedBox(height: 24),
         // Action Buttons
         Row(
@@ -840,10 +777,10 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                     'phoneNumber': phoneController.text.trim().isEmpty
                         ? null
                         : phoneController.text.trim(),
-                    'cityId': selectedCityId,
                     'imageUrl': _selectedImageDataUrl ?? _currentUser.imageUrl,
                     'isActive': _currentUser.isActive,
-                    'roleIds': [],
+                    'isAdmin': _currentUser.isAdmin,
+                    'isClient': _currentUser.isClient,
                   };
 
                   await _userProvider.update(_currentUser.id, request);
@@ -887,8 +824,6 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           );
         },
       );
-      },
-    );
   }
 
   Widget _buildSecuritySettingsSection() {
@@ -1182,12 +1117,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                     'email': _currentUser.email,
                     'username': _currentUser.username,
                     'phoneNumber': _currentUser.phoneNumber,
-                    'cityId': _currentUser.cityId,
                     'imageUrl': _currentUser.imageUrl,
                     'currentPassword': currentPasswordController.text,
                     'password': newPasswordController.text,
                     'isActive': _currentUser.isActive,
-                    'roleIds': [],
+                    'isAdmin': _currentUser.isAdmin,
+                    'isClient': _currentUser.isClient,
                   };
 
                   await _userProvider.update(_currentUser.id, request);

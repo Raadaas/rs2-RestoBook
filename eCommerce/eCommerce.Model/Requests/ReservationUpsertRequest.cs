@@ -32,9 +32,6 @@ namespace eCommerce.Model.Requests
         [MaxLength(500)]
         public string? SpecialRequests { get; set; }
         
-        [MaxLength(200)]
-        public string? QRCode { get; set; }
-        
         public DateTime? ConfirmedAt { get; set; }
         
         public DateTime? CancelledAt { get; set; }

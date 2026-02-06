@@ -9,9 +9,9 @@ class User {
   final DateTime? lastLoginAt;
   final DateTime? passwordChangedAt;
   final String? phoneNumber;
-  final int? cityId;
   final String? imageUrl;
-  final String? roleName; // First role name if available
+  final bool isAdmin;
+  final bool isClient;
 
   User({
     required this.id,
@@ -24,18 +24,12 @@ class User {
     this.lastLoginAt,
     this.passwordChangedAt,
     this.phoneNumber,
-    this.cityId,
     this.imageUrl,
-    this.roleName,
+    this.isAdmin = true,
+    this.isClient = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    // Extract first role name if roles array exists
-    String? roleName;
-    if (json['roles'] != null && json['roles'] is List && (json['roles'] as List).isNotEmpty) {
-      roleName = json['roles'][0]['name'];
-    }
-
     return User(
       id: json['id'] ?? 0,
       firstName: json['firstName'] ?? '',
@@ -53,9 +47,9 @@ class User {
           ? DateTime.parse(json['passwordChangedAt'])
           : null,
       phoneNumber: json['phoneNumber'],
-      cityId: json['cityId'],
       imageUrl: json['imageUrl'],
-      roleName: roleName,
+      isAdmin: json['isAdmin'] ?? true,
+      isClient: json['isClient'] ?? true,
     );
   }
 }

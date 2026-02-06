@@ -38,6 +38,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult<UserResponse>> Create(UserUpsertRequest request)
         {
             var createdUser = await _userService.CreateAsync(request);

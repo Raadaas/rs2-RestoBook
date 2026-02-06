@@ -1,8 +1,10 @@
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/review.dart';
 import 'package:ecommerce_mobile/providers/review_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+const Color _brown = Color(0xFF8B7355);
 
 class MyReviewsScreen extends StatefulWidget {
   const MyReviewsScreen({super.key});
@@ -128,6 +130,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,10 +147,9 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                     constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Reviews',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
-                  ),
+                  const Text('Reviews', style: kScreenTitleStyle),
+                  const SizedBox(height: 8),
+                  kScreenTitleUnderline(margin: EdgeInsets.zero),
                 ],
               ),
             ),
@@ -187,221 +189,240 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
     return _buildViewCard(r);
   }
 
+  String _timeAgo(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} years ago';
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} months ago';
+    if (diff.inDays > 0) return '${diff.inDays} days ago';
+    if (diff.inHours > 0) return '${diff.inHours} hours ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} minutes ago';
+    return 'Just now';
+  }
+
   Widget _buildViewCard(Review r) {
-    final dateStr = DateFormat('MMM d, yyyy').format(r.createdAt);
-    final comment = r.comment ?? 'No comment';
+    final initials = r.restaurantName.isNotEmpty
+        ? r.restaurantName.split(' ').map((s) => s.isNotEmpty ? s[0] : '').take(2).join().toUpperCase()
+        : '?';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 0,
-            blurRadius: 6,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: _brown.withOpacity(0.25),
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    color: _brown,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
-                  child: Icon(Icons.star_border, color: Color(0xFF8B7355), size: 24),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        r.restaurantName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4A4A4A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          ...List.generate(5, (i) => Icon(
-                            i < r.rating ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 16,
-                          )),
-                          const SizedBox(width: 4),
-                          Text(
-                            '• $dateStr',
-                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            r.restaurantName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Color(0xFF2D2D2D),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: Colors.grey[700], size: 22),
-                  padding: EdgeInsets.zero,
-                  onSelected: (value) {
-                    if (value == 'edit') _startEdit(r);
-                    if (value == 'delete') _confirmDelete(r);
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ),
+                        Text(
+                          _timeAgo(r.createdAt),
+                          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(width: 4),
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.grey[600], size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          onSelected: (value) {
+                            if (value == 'edit') _startEdit(r);
+                            if (value == 'delete') _confirmDelete(r);
+                          },
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: List.generate(5, (i) {
+                        return Icon(
+                          i < r.rating ? Icons.star : Icons.star_border,
+                          size: 18,
+                          color: i < r.rating ? Colors.amber[700] : Colors.grey[400],
+                        );
+                      }),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          if (r.comment != null && r.comment!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              comment,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.4),
-              maxLines: 10,
-              overflow: TextOverflow.ellipsis,
+              r.comment!,
+              style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.4),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildEditCard(Review r) {
-    final dateStr = DateFormat('MMM d, yyyy').format(r.createdAt);
+    final initials = r.restaurantName.isNotEmpty
+        ? r.restaurantName.split(' ').map((s) => s.isNotEmpty ? s[0] : '').take(2).join().toUpperCase()
+        : '?';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 0,
-            blurRadius: 6,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.star_border, color: Color(0xFF8B7355), size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        r.restaurantName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4A4A4A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '• $dateStr',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                      ),
-                    ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: _brown.withOpacity(0.25),
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    color: _brown,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _editCommentController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Your review...',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               ),
-              style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text('Rating: ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                ...List.generate(5, (i) => InkWell(
-                  onTap: () => setState(() => _editRating = i + 1),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: Icon(
-                      i < _editRating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 28,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.restaurantName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Color(0xFF2D2D2D),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                )),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: _saving ? null : _cancelEdit,
-                  child: const Text('Cancel'),
+                    const SizedBox(height: 4),
+                    Text(
+                      _timeAgo(r.createdAt),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _saving ? null : () => _saveEdit(r),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B7355),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Save changes'),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _editCommentController,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'Your review...',
+              hintStyle: TextStyle(color: Colors.grey[500]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
-          ],
-        ),
+            style: TextStyle(fontSize: 15, color: Colors.grey[800]),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text('Rating: ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+              ...List.generate(5, (i) => InkWell(
+                onTap: () => setState(() => _editRating = i + 1),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Icon(
+                    i < _editRating ? Icons.star : Icons.star_border,
+                    size: 22,
+                    color: i < _editRating ? Colors.amber[700] : Colors.grey[400],
+                  ),
+                ),
+              )),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: _saving ? null : _cancelEdit,
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _saving ? null : () => _saveEdit(r),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _brown,
+                  foregroundColor: Colors.white,
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Save changes'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

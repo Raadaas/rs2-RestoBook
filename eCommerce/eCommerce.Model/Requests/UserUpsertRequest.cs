@@ -26,8 +26,6 @@ namespace eCommerce.Model.Requests
         [Phone]
         public string? PhoneNumber { get; set; }
         
-        public int? CityId { get; set; }
-        
         [MaxLength(100000)]
         public string? ImageUrl { get; set; }
         
@@ -40,7 +38,7 @@ namespace eCommerce.Model.Requests
         // Used when changing password to verify current password
         public string? CurrentPassword { get; set; }
         
-        // Collection of role IDs to assign to the user
-        public List<int> RoleIds { get; set; } = new List<int>();
+        public bool IsAdmin { get; set; } = false;
+        public bool IsClient { get; set; } = true;
     }
 } 

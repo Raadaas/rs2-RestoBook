@@ -1,3 +1,5 @@
+import 'package:ecommerce_mobile/app_styles.dart';
+import 'package:ecommerce_mobile/screens/modify_reservation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_mobile/providers/reservation_provider.dart';
@@ -166,39 +168,14 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  void _showQRCode(Reservation reservation) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('QR Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (reservation.qrCode != null)
-              Image.network(
-                reservation.qrCode!,
-                width: 200,
-                height: 200,
-              )
-            else
-              const Text('QR code not available'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _editReservation(Reservation reservation) {
-    // TODO: Implement edit reservation screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality not implemented yet')),
-    );
+    if (reservation.status != 'Requested') return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ModifyReservationScreen(reservation: reservation),
+      ),
+    ).then((_) => _loadReservations());
   }
 
   String _getStatusText(String status) {
@@ -238,22 +215,19 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'My Reservations',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
+                  const Text('My Reservations', style: kScreenTitleStyle),
+                  const SizedBox(height: 8),
+                  kScreenTitleUnderline(margin: EdgeInsets.zero),
                 ],
               ),
             ),
@@ -376,6 +350,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -501,20 +477,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
             const SizedBox(height: 16),
             // Action buttons
             if (reservation.status == 'Requested' || reservation.status == 'Confirmed') ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showQRCode(reservation),
-                  icon: const Icon(Icons.qr_code),
-                  label: const Text('Show QR Code'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B7355),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
               Row(
                 children: [
                   if (reservation.status == 'Requested')
@@ -543,20 +505,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     ),
                   ),
                 ],
-              ),
-            ] else if (reservation.status == 'Completed') ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showQRCode(reservation),
-                  icon: const Icon(Icons.qr_code),
-                  label: const Text('Show QR Code'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B7355),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
               ),
             ] else if (reservation.status == 'Cancelled' || reservation.status == 'Expired') ...[
               // Show cancellation reason if available

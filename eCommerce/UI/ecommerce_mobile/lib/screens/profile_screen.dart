@@ -56,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

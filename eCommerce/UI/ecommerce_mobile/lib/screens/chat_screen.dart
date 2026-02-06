@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_mobile/model/chat_models.dart';
 import 'package:ecommerce_mobile/providers/chat_provider.dart';
@@ -86,15 +87,17 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         elevation: 0,
-        title: const Text(
-          'Messages',
-          style: TextStyle(
-            color: Color(0xFF4A4A4A),
-            fontWeight: FontWeight.w700,
+        foregroundColor: Colors.black87,
+        title: const Text('Messages', style: kScreenTitleStyle),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(19),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: kScreenTitleUnderline(margin: EdgeInsets.zero),
           ),
         ),
         actions: [

@@ -334,8 +334,8 @@ class DashboardScreen extends StatelessWidget {
       );
     }
 
-    // Y-axis shows only 0 at bottom and total tables at top
-    final yAxisInterval = totalTables.toDouble(); // Large interval so only 0 and max show
+    // Y-axis shows only 0 at bottom and total tables at top (interval must be > 0)
+    final yAxisInterval = totalTables <= 0 ? 1.0 : totalTables.toDouble();
 
     return Card(
       elevation: 2,
@@ -434,7 +434,7 @@ class DashboardScreen extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: totalTables.toDouble(), // Only show grid at 0 and max
+                    horizontalInterval: totalTables <= 0 ? 1.0 : totalTables.toDouble(),
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
                         color: Colors.grey[300]!,

@@ -12,7 +12,6 @@ class Reservation {
   final int numberOfGuests;
   final String status;
   final String? specialRequests;
-  final String? qrCode;
   final DateTime createdAt;
   final DateTime? confirmedAt;
   final DateTime? cancelledAt;
@@ -32,7 +31,6 @@ class Reservation {
     required this.numberOfGuests,
     required this.status,
     this.specialRequests,
-    this.qrCode,
     required this.createdAt,
     this.confirmedAt,
     this.cancelledAt,
@@ -56,7 +54,6 @@ class Reservation {
       numberOfGuests: json['numberOfGuests'] ?? 0,
       status: json['status'] ?? 'Pending',
       specialRequests: json['specialRequests'],
-      qrCode: json['qrCode'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -85,7 +82,6 @@ class Reservation {
       'numberOfGuests': numberOfGuests,
       'status': status,
       'specialRequests': specialRequests,
-      'qrCode': qrCode,
       'createdAt': createdAt.toIso8601String(),
       'confirmedAt': confirmedAt?.toIso8601String(),
       'cancelledAt': cancelledAt?.toIso8601String(),

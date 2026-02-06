@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ecommerce_mobile/app_styles.dart';
 
 const Color _brown = Color(0xFF8B7355);
 const Color _brownLight = Color(0xFFB39B7A);
@@ -45,16 +46,9 @@ class HelpSupportScreen extends StatelessWidget {
           children: [
             const Padding(
               padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                'Help & Support',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
-                ),
-              ),
+              child: Text('Help & Support', style: kScreenTitleStyle),
             ),
-            Container(height: 3, width: 48, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: _brownLight, borderRadius: BorderRadius.circular(2))),
+            kScreenTitleUnderline(),
             _buildContactSection(context),
             const SizedBox(height: 32),
             _buildFaqSection(context),

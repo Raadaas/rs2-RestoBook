@@ -43,16 +43,13 @@ namespace eCommerce.Services.Database
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
         
-        public int? CityId { get; set; }
-        
-        [ForeignKey("CityId")]
-        public City? City { get; set; }
-        
         [MaxLength(100000)]
         public string? ImageUrl { get; set; }
         
+        public bool IsAdmin { get; set; } = true;
+        public bool IsClient { get; set; } = true;
+        
         // Navigation properties
-        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<UserPreference> UserPreferences { get; set; } = new List<UserPreference>();
         public ICollection<Restaurant> OwnedRestaurants { get; set; } = new List<Restaurant>();
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

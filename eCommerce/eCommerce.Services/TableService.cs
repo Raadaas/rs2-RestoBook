@@ -17,6 +17,20 @@ namespace eCommerce.Services
         {
         }
 
+        protected override async Task BeforeDelete(Database.Table entity)
+        {
+            var hasActiveReservations = await _context.Reservations
+                .AnyAsync(r => r.TableId == entity.Id &&
+                    (r.State == ReservationState.Requested || r.State == ReservationState.Confirmed));
+
+            if (hasActiveReservations)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete table: it has reservations that are Requested or Confirmed. " +
+                    "Only tables with Completed, Cancelled, or Expired reservations (or no reservations) can be deleted.");
+            }
+        }
+
         public override async Task<TableResponse> CreateAsync(TableUpsertRequest request)
         {
             var entity = new Database.Table();
@@ -154,7 +168,8 @@ namespace eCommerce.Services
             
             // Get distinct table IDs that are currently occupied
             var occupiedTableIds = currentlyActiveReservations
-                .Select(r => r.TableId)
+                .Where(r => r.TableId.HasValue)
+                .Select(r => r.TableId!.Value)
                 .Distinct()
                 .ToList();
             

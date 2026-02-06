@@ -51,14 +51,11 @@ namespace eCommerce.WebAPI.Filters
                 new Claim(ClaimTypes.Email, user.Email)
             };
             
-            // Add role claims
-            if (user.Roles != null)
-            {
-                foreach (var role in user.Roles)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, role.Name));
-                }
-            }
+            // Add role claims based on IsAdmin and IsClient
+            if (user.IsAdmin)
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            if (user.IsClient)
+                claims.Add(new Claim(ClaimTypes.Role, "Client"));
             
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);

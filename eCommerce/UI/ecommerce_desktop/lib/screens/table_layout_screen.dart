@@ -281,17 +281,7 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
     if (confirm != true) return;
 
     try {
-      final request = {
-        'restaurantId': widget.restaurantId,
-        'tableNumber': _selectedTable!.tableNumber,
-        'capacity': _selectedTable!.capacity,
-        'tableType': _selectedTable!.tableType,
-        'positionX': _selectedTable!.positionX,
-        'positionY': _selectedTable!.positionY,
-        'isActive': false,
-      };
-
-      await _tableProvider.update(_selectedTable!.id, request);
+      await _tableProvider.delete(_selectedTable!.id);
       await _loadTables();
       
       setState(() {

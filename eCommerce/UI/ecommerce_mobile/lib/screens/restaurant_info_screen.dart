@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_mobile/model/restaurant.dart';
@@ -188,7 +189,7 @@ class _RestaurantInfoScreenState extends State<RestaurantInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.lerp(Colors.grey[100], _brown, 0.03) ?? Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       body: _loading
           ? Center(child: CircularProgressIndicator(color: _brown))
           : _error != null
@@ -412,15 +413,9 @@ class _RestaurantInfoScreenState extends State<RestaurantInfoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              r.name,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D2D2D),
-              ),
-            ),
-            const SizedBox(height: 12),
+            Text(r.name, style: kScreenTitleStyle),
+            const SizedBox(height: 8),
+            kScreenTitleUnderline(margin: const EdgeInsets.only(bottom: 12)),
             Row(
               children: [
                 Icon(Icons.star, color: Colors.amber[700], size: 22),

@@ -1,9 +1,8 @@
 import 'dart:convert';
 
-import 'package:ecommerce_mobile/model/city.dart';
+import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/user.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
-import 'package:ecommerce_mobile/providers/city_provider.dart';
 import 'package:ecommerce_mobile/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -22,13 +21,10 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final UserProvider _userProvider = UserProvider();
-  final CityProvider _cityProvider = CityProvider();
   User? _user;
-  List<City> _cities = [];
   bool _loading = true;
   String? _error;
   String? _selectedImageDataUrl;
-  int? _selectedCityId;
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -67,11 +63,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     try {
       final user = await _userProvider.getById(userId);
-      final cities = await _cityProvider.getActive();
       if (!mounted) return;
       setState(() {
         _user = user;
-        _cities = cities;
         _loading = false;
         _error = user == null ? 'User not found' : null;
       });
@@ -81,7 +75,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _usernameController.text = user.username;
         _emailController.text = user.email;
         _phoneController.text = user.phoneNumber ?? '';
-        _selectedCityId = user.cityId;
       }
     } catch (e) {
       if (!mounted) return;
@@ -268,41 +261,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _cityDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'City',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF333333),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<int>(
-          value: _selectedCityId,
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.location_city_outlined, size: 22, color: Colors.grey[600]),
-            filled: true,
-            fillColor: _beige,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-          items: [
-            const DropdownMenuItem(value: null, child: Text('Select city')),
-            ..._cities.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
-          ],
-          onChanged: (v) => setState(() => _selectedCityId = v),
-        ),
-      ],
-    );
-  }
-
   Future<void> _save() async {
     final user = _user;
     if (user == null) return;
@@ -324,7 +282,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'email': email,
         'username': username,
         'phoneNumber': phone.isEmpty ? null : phone,
-        'cityId': _selectedCityId,
         'imageUrl': _selectedImageDataUrl ?? user.imageUrl,
         'isActive': user.isActive,
         'roleIds': <int>[],
@@ -432,7 +389,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'email': user.email,
                       'username': user.username,
                       'phoneNumber': user.phoneNumber,
-                      'cityId': user.cityId,
                       'imageUrl': user.imageUrl,
                       'isActive': user.isActive,
                       'roleIds': <int>[],
@@ -467,9 +423,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         elevation: 0,
         foregroundColor: Colors.black87,
       ),
@@ -499,24 +455,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'Settings',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
+                        child: Text('Settings', style: kScreenTitleStyle),
                       ),
-                      Container(
-                        height: 3,
-                        width: 48,
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          color: _brownLight,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+                      kScreenTitleUnderline(margin: const EdgeInsets.only(bottom: 24)),
                       Center(
                         child: Column(
                           children: [
@@ -573,8 +514,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         hint: '+387 61 234 567',
                         keyboardType: TextInputType.phone,
                       ),
-                      const SizedBox(height: 16),
-                      _cityDropdown(),
                       const SizedBox(height: 32),
                       SizedBox(
                         height: 52,
