@@ -1,17 +1,23 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace eCommerce.Services
 {
     public class RestaurantService : BaseCRUDService<RestaurantResponse, RestaurantSearchObject, Database.Restaurant, RestaurantUpsertRequest, RestaurantUpsertRequest>, IRestaurantService
     {
-        public RestaurantService(eCommerceDbContext context, IMapper mapper) : base(context, mapper)
+        private readonly ContentBasedRestaurantRecommender _recommender;
+
+        public RestaurantService(eCommerceDbContext context, IMapper mapper, ContentBasedRestaurantRecommender recommender) : base(context, mapper)
         {
+            _recommender = recommender;
         }
 
         public override async Task<RestaurantResponse> CreateAsync(RestaurantUpsertRequest request)
@@ -135,6 +141,80 @@ namespace eCommerce.Services
                 return null;
                 
             return MapToResponse(entity);
+        }
+
+        public async Task<List<RestaurantResponse>> GetRecommendedForUserAsync(int userId, int count = 10)
+        {
+            var likedRestaurantIds = await GetLikedRestaurantIdsAsync(userId);
+            // Uključujemo SVE aktivne restorane kao kandidate – i one gdje je korisnik već bio.
+            // Rangiranje po sličnosti s profilom: mjesta gdje ima najviše rezervacija bit će najsličnija i na vrhu.
+            var candidates = await _context.Restaurants
+                .Where(r => r.IsActive)
+                .Select(r => r.Id)
+                .ToListAsync();
+
+            if (candidates.Count == 0)
+                return new List<RestaurantResponse>();
+
+            List<int> topIds;
+            if (_recommender.IsBuilt)
+            {
+                var userProfile = _recommender.GetUserProfileVector(likedRestaurantIds);
+                if (userProfile != null)
+                {
+                    topIds = _recommender.GetTopN(userProfile, candidates, count).ToList();
+                }
+                else
+                {
+                    // Nema profila (nema completed rezervacija ni recenzija ≥4): top po ocjeni
+                    topIds = await _context.Restaurants
+                        .Where(r => r.IsActive)
+                        .OrderByDescending(r => r.AverageRating ?? 0)
+                        .Take(count)
+                        .Select(r => r.Id)
+                        .ToListAsync();
+                }
+                if (topIds.Count == 0 && candidates.Count > 0)
+                    topIds = await _context.Restaurants
+                        .Where(r => r.IsActive)
+                        .OrderByDescending(r => r.AverageRating ?? 0)
+                        .Take(count)
+                        .Select(r => r.Id)
+                        .ToListAsync();
+            }
+            else
+            {
+                topIds = await _context.Restaurants
+                    .Where(r => r.IsActive)
+                    .OrderByDescending(r => r.AverageRating ?? 0)
+                    .Take(count)
+                    .Select(r => r.Id)
+                    .ToListAsync();
+            }
+
+            var ordered = await _context.Restaurants
+                .Include(r => r.Owner)
+                .Include(r => r.City)
+                .Include(r => r.CuisineType)
+                .Where(r => topIds.Contains(r.Id))
+                .ToListAsync();
+            var byId = ordered.ToDictionary(r => r.Id);
+            return topIds.Where(id => byId.ContainsKey(id)).Select(id => MapToResponse(byId[id])).ToList();
+        }
+
+        private async Task<List<int>> GetLikedRestaurantIdsAsync(int userId)
+        {
+            var fromReservations = await _context.Reservations
+                .Where(r => r.UserId == userId && r.State == ReservationState.Completed)
+                .Select(r => r.RestaurantId)
+                .Distinct()
+                .ToListAsync();
+            var fromReviews = await _context.Reviews
+                .Where(r => r.UserId == userId && r.Rating >= 4)
+                .Select(r => r.RestaurantId)
+                .Distinct()
+                .ToListAsync();
+            return fromReservations.Union(fromReviews).Distinct().ToList();
         }
     }
 }

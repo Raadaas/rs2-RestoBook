@@ -10,6 +10,7 @@ using Mapster;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
@@ -19,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<ICityService, CityService>();
 builder.Services.AddTransient<ICuisineTypeService, CuisineTypeService>();
+builder.Services.AddSingleton<ContentBasedRestaurantRecommender>();
 builder.Services.AddTransient<IRestaurantService, RestaurantService>();
 builder.Services.AddTransient<ITableService, TableService>();
 builder.Services.AddTransient<IMenuItemService, MenuItemService>();
@@ -135,5 +137,26 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Build content-based recommender from restaurant data (TF-IDF + cosine similarity; cross-platform, no native deps)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<eCommerceDbContext>();
+    var recommender = scope.ServiceProvider.GetRequiredService<ContentBasedRestaurantRecommender>();
+    var restaurants = await db.Restaurants.Where(r => r.IsActive).ToListAsync();
+    var inputs = restaurants.Select(r => new ContentBasedRestaurantRecommender.RestaurantFeatureInput
+    {
+        RestaurantId = r.Id,
+        Name = r.Name ?? "",
+        Description = r.Description ?? "",
+        CuisineTypeId = r.CuisineTypeId,
+        CityId = r.CityId,
+        HasParking = r.HasParking ? 1f : 0f,
+        HasTerrace = r.HasTerrace ? 1f : 0f,
+        IsKidFriendly = r.IsKidFriendly ? 1f : 0f,
+        AverageRating = (float)(r.AverageRating ?? 0)
+    }).ToList();
+    recommender.BuildFromRestaurants(inputs);
+}
 
 app.Run();
