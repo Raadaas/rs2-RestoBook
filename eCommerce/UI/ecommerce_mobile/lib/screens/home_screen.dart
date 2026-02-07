@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
@@ -6,8 +5,6 @@ import 'package:ecommerce_mobile/providers/favorite_provider.dart';
 import 'package:ecommerce_mobile/screens/restaurant_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -46,22 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-  }
-
-  Future<void> _saveRecentRestaurant(Restaurant restaurant) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final recentJson = prefs.getStringList('recent_restaurants') ?? [];
-      recentJson.removeWhere((json) {
-        final r = Restaurant.fromJson(jsonDecode(json) as Map<String, dynamic>);
-        return r.id == restaurant.id;
-      });
-      recentJson.insert(0, jsonEncode(restaurant.toJson()));
-      if (recentJson.length > 10) {
-        recentJson.removeRange(10, recentJson.length);
-      }
-      await prefs.setStringList('recent_restaurants', recentJson);
-    } catch (_) {}
   }
 
   @override
@@ -141,8 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isFav = fav.ids.contains(restaurant.id);
 
     return GestureDetector(
-      onTap: () async {
-        await _saveRecentRestaurant(restaurant);
+      onTap: () {
         if (mounted) {
           Navigator.push(
             context,

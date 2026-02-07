@@ -12,8 +12,8 @@ using eCommerce.Services.Database;
 namespace eCommerce.Services.Migrations
 {
     [DbContext(typeof(eCommerceDbContext))]
-    [Migration("20251229041039_RestoBookModels")]
-    partial class RestoBookModels
+    [Migration("20260207031625_InitialCreate1")]
+    partial class InitialCreate1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -195,13 +195,11 @@ namespace eCommerce.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Allergens")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<int>("Allergens")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Category")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int?>("Category")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -211,16 +209,9 @@ namespace eCommerce.Services.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsVegan")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsVegetarian")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -312,11 +303,6 @@ namespace eCommerce.Services.Migrations
                     b.Property<int?>("ReservationId")
                         .HasColumnType("int");
 
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -352,12 +338,11 @@ namespace eCommerce.Services.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("time");
+
                     b.Property<int>("NumberOfGuests")
                         .HasColumnType("int");
-
-                    b.Property<string>("QRCode")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("ReservationDate")
                         .HasColumnType("datetime2");
@@ -372,12 +357,10 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("State")
+                        .HasColumnType("int");
 
-                    b.Property<int>("TableId")
+                    b.Property<int?>("TableId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -452,6 +435,9 @@ namespace eCommerce.Services.Migrations
                     b.Property<int>("CityId")
                         .HasColumnType("int");
 
+                    b.Property<TimeSpan>("CloseTime")
+                        .HasColumnType("time");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -489,15 +475,15 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<TimeSpan>("OpenTime")
+                        .HasColumnType("time");
+
                     b.Property<int>("OwnerId")
                         .HasColumnType("int");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("PriceRange")
-                        .HasColumnType("int");
 
                     b.Property<int>("TotalReviews")
                         .HasColumnType("int");
@@ -532,8 +518,8 @@ namespace eCommerce.Services.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(100000)
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
@@ -588,36 +574,6 @@ namespace eCommerce.Services.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("RestaurantStatistics");
-                });
-
-            modelBuilder.Entity("eCommerce.Services.Database.RestaurantWorkingHours", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<TimeSpan>("CloseTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.Property<TimeSpan>("OpenTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("RestaurantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RestaurantId");
-
-                    b.ToTable("RestaurantWorkingHours");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
@@ -698,10 +654,6 @@ namespace eCommerce.Services.Migrations
                     b.Property<int?>("RestaurantId")
                         .HasColumnType("int");
 
-                    b.Property<string>("RewardType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -712,38 +664,6 @@ namespace eCommerce.Services.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("Rewards");
-                });
-
-            modelBuilder.Entity("eCommerce.Services.Database.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.SpecialOffer", b =>
@@ -761,11 +681,11 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<decimal>("DiscountPercentage")
-                        .HasColumnType("decimal(5,2)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
@@ -816,9 +736,8 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("TableType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int?>("TableType")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -835,9 +754,6 @@ namespace eCommerce.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CityId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -851,7 +767,17 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(100000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsClient")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastLoginAt")
@@ -861,6 +787,9 @@ namespace eCommerce.Services.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("PasswordChangedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -880,8 +809,6 @@ namespace eCommerce.Services.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CityId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -999,33 +926,6 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("UserRewards");
                 });
 
-            modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("DateAssigned")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId", "RoleId")
-                        .IsUnique();
-
-                    b.ToTable("UserRoles");
-                });
-
             modelBuilder.Entity("eCommerce.Services.Database.ChatConversation", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Restaurant", "Restaurant")
@@ -1141,8 +1041,7 @@ namespace eCommerce.Services.Migrations
                     b.HasOne("eCommerce.Services.Database.Table", "Table")
                         .WithMany("Reservations")
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("eCommerce.Services.Database.User", "User")
                         .WithMany("Reservations")
@@ -1225,17 +1124,6 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Restaurant");
                 });
 
-            modelBuilder.Entity("eCommerce.Services.Database.RestaurantWorkingHours", b =>
-                {
-                    b.HasOne("eCommerce.Services.Database.Restaurant", "Restaurant")
-                        .WithMany("WorkingHours")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurant");
-                });
-
             modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Reservation", "Reservation")
@@ -1295,16 +1183,6 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Restaurant");
                 });
 
-            modelBuilder.Entity("eCommerce.Services.Database.User", b =>
-                {
-                    b.HasOne("eCommerce.Services.Database.City", "City")
-                        .WithMany("Users")
-                        .HasForeignKey("CityId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("City");
-                });
-
             modelBuilder.Entity("eCommerce.Services.Database.UserBehavior", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Restaurant", "Restaurant")
@@ -1362,25 +1240,6 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>
-                {
-                    b.HasOne("eCommerce.Services.Database.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("eCommerce.Services.Database.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("eCommerce.Services.Database.ChatConversation", b =>
                 {
                     b.Navigation("Messages");
@@ -1389,8 +1248,6 @@ namespace eCommerce.Services.Migrations
             modelBuilder.Entity("eCommerce.Services.Database.City", b =>
                 {
                     b.Navigation("Restaurants");
-
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.CuisineType", b =>
@@ -1433,18 +1290,11 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Tables");
 
                     b.Navigation("UserBehaviors");
-
-                    b.Navigation("WorkingHours");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Reward", b =>
                 {
                     b.Navigation("UserRewards");
-                });
-
-            modelBuilder.Entity("eCommerce.Services.Database.Role", b =>
-                {
-                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Table", b =>
@@ -1477,8 +1327,6 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("UserPreferences");
 
                     b.Navigation("UserRewards");
-
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

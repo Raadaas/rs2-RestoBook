@@ -110,7 +110,7 @@ Implementacija je u datoteci **`ContentBasedRestaurantRecommender.cs`** (BuildFr
 
 ---
 
-## 4. Zašto je content-based recommender dobar izbor za diplomski rad
+## 4. Zašto je content-based recommender dobar izbor
 
 - **Jasna teorija:** Feature vektori (tekst + kategorije + numeričke značajke), profil korisnika kao prosjek vektora, kosinusna sličnost – sve je lako objasniti i nacrtati (shema pipelinea, formula sličnosti).
 - **Bez collaborative filteringa:** Ne trebaju “slični korisnici” niti matrica user–item; fokus je na **sadržaju** restorana i na **profilu** jednog korisnika. To smanjuje složenost i olakšava evaluaciju (npr. precision/recall na “voljenim” restoranima).

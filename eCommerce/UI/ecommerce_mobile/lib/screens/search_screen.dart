@@ -4,6 +4,7 @@ import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/model/cuisine_type.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/providers/cuisine_type_provider.dart';
+import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/favorite_provider.dart';
 import 'package:ecommerce_mobile/screens/restaurant_info_screen.dart';
 import 'package:flutter/material.dart';
@@ -60,10 +61,16 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  static String _recentKey() => 'recent_restaurants_${AuthProvider.userId ?? 0}';
+
   Future<void> _loadRecentRestaurants() async {
+    if (AuthProvider.userId == null) {
+      setState(() => _recentRestaurants = []);
+      return;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
-      final recentJson = prefs.getStringList('recent_restaurants') ?? [];
+      final recentJson = prefs.getStringList(_recentKey()) ?? [];
       final restaurants = recentJson.map((json) => Restaurant.fromJson(jsonDecode(json))).toList();
       setState(() {
         _recentRestaurants = restaurants;
@@ -74,25 +81,20 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _saveRecentRestaurant(Restaurant restaurant) async {
+    if (AuthProvider.userId == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final recentJson = prefs.getStringList('recent_restaurants') ?? [];
-      
-      // Remove if already exists
+      final recentJson = prefs.getStringList(_recentKey()) ?? [];
+
       recentJson.removeWhere((json) {
         final r = Restaurant.fromJson(jsonDecode(json));
         return r.id == restaurant.id;
       });
-      
-      // Add to beginning
       recentJson.insert(0, jsonEncode(restaurant.toJson()));
-      
-      // Keep only last 10
       if (recentJson.length > 10) {
         recentJson.removeRange(10, recentJson.length);
       }
-      
-      await prefs.setStringList('recent_restaurants', recentJson);
+      await prefs.setStringList(_recentKey(), recentJson);
     } catch (e) {
       print('Error saving recent restaurant: $e');
     }
@@ -347,12 +349,12 @@ class _SearchScreenState extends State<SearchScreen> {
       return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _searchResults.length,
-        itemBuilder: (context, index) => _buildRestaurantCard(_searchResults[index]),
+        itemBuilder: (context, index) => _buildRestaurantCard(_searchResults[index], fromSearchResults: true),
       );
     }
 
-    // Show recent restaurants only if search is empty AND user hasn't searched yet
-    if (!hasSearchQuery && !_hasSearched && _recentRestaurants.isNotEmpty) {
+    // Prikaži recent samo ako ima restorana koji su bili pretraživani (otvoreni iz rezultata pretrage)
+    if (!hasSearchQuery && _recentRestaurants.isNotEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -374,22 +376,36 @@ class _SearchScreenState extends State<SearchScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: _recentRestaurants.length,
-              itemBuilder: (context, index) => _buildRestaurantCard(_recentRestaurants[index]),
+              itemBuilder: (context, index) => _buildRestaurantCard(_recentRestaurants[index], fromSearchResults: false),
             ),
           ),
         ],
       );
     }
 
+    // Nije bilo pretrage – samo poruka
+    if (!hasSearchQuery && !_hasSearched) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Unesite pojam za pretragu ili koristite filtere da biste pronašli restorane.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
     return const Center(
       child: Text(
-        'No restaurants',
+        'Nema pronađenih restorana',
         style: TextStyle(fontSize: 16, color: Colors.grey),
       ),
     );
   }
 
-  Widget _buildRestaurantCard(Restaurant restaurant) {
+  Widget _buildRestaurantCard(Restaurant restaurant, {bool fromSearchResults = false}) {
     final rating = restaurant.averageRating ?? 0.0;
     final reviews = restaurant.totalReviews;
     final fav = context.watch<FavoriteProvider>();
@@ -397,7 +413,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return GestureDetector(
       onTap: () async {
-        await _saveRecentRestaurant(restaurant);
+        if (fromSearchResults) {
+          await _saveRecentRestaurant(restaurant);
+          _loadRecentRestaurants();
+        }
         if (mounted) {
           Navigator.push(
             context,
