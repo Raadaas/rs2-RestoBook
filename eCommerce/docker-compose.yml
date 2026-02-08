@@ -17,7 +17,7 @@ services:
       context: .
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=ecommerce-sql;Database=eCommerceDb4;User=sa;Password=QWEasd123!;ConnectRetryCount=0;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=ecommerce-sql;Database=eCommerceDb4;User=sa;Password=QWEasd123!;ConnectRetryCount=0;TrustServerCertificate=True
     ports:
       - "5121:5121"
     networks:

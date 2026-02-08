@@ -118,11 +118,11 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Ensure database is created
-// using (var scope = app.Services.CreateScope())
-// {
-//     var dbContext = scope.ServiceProvider.GetRequiredService<eCommerceDbContext>();
-//     dbContext.Database.EnsureCreated();
-// }
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<eCommerceDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
