@@ -19,7 +19,6 @@ namespace eCommerce.Services.Database
         
         // Navigation properties
         public ICollection<Restaurant> Restaurants { get; set; } = new List<Restaurant>();
-        public ICollection<UserPreference> UserPreferences { get; set; } = new List<UserPreference>();
     }
 }
 

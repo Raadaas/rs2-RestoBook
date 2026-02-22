@@ -47,6 +47,8 @@ dependencies:
   image: ^4.1.7
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  pdf: ^3.10.7
+  printing: ^5.11.1
 
 dev_dependencies:
   flutter_test:

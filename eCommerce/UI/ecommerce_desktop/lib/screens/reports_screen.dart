@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecommerce_desktop/providers/reports_provider.dart';
+import 'package:ecommerce_desktop/services/pdf_report_service.dart';
+import 'package:ecommerce_desktop/services/save_pdf.dart';
 import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -83,11 +85,11 @@ class ReportsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: _buildPeakHoursChart(provider),
+                          child: _buildPeakHoursChart(context, provider),
                         ),
                         const SizedBox(width: 24),
                         Expanded(
-                          child: _buildWeeklyOccupancyChart(provider),
+                          child: _buildWeeklyOccupancyChart(context, provider),
                         ),
                       ],
                     ),
@@ -364,7 +366,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPeakHoursChart(ReportsProvider provider) {
+  Widget _buildPeakHoursChart(BuildContext context, ReportsProvider provider) {
     final hourlyData = provider.hourlyData;
 
     if (hourlyData.isEmpty) {
@@ -396,13 +398,20 @@ class ReportsScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.bar_chart, color: Color(0xFF8B7355)),
                 const SizedBox(width: 8),
-                const Text(
-                  'Peak Hours Analysis',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF4A4A4A),
+                const Expanded(
+                  child: Text(
+                    'Peak Hours Analysis',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4A4A4A),
+                    ),
                   ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _downloadPeakHoursPdf(context, provider),
+                  icon: const Icon(Icons.download, size: 18, color: Color(0xFF8B7355)),
+                  label: const Text('Download PDF', style: TextStyle(color: Color(0xFF8B7355))),
                 ),
               ],
             ),
@@ -523,7 +532,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyOccupancyChart(ReportsProvider provider) {
+  Widget _buildWeeklyOccupancyChart(BuildContext context, ReportsProvider provider) {
     final weeklyData = provider.weeklyOccupancy;
 
     if (weeklyData.isEmpty) {
@@ -555,13 +564,20 @@ class ReportsScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.timeline, color: Color(0xFF8B7355)),
                 const SizedBox(width: 8),
-                const Text(
-                  'Weekly Reservations Distribution',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF4A4A4A),
+                const Expanded(
+                  child: Text(
+                    'Weekly Reservations Distribution',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4A4A4A),
+                    ),
                   ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _downloadWeeklyPdf(context, provider),
+                  icon: const Icon(Icons.download, size: 18, color: Color(0xFF8B7355)),
+                  label: const Text('Download PDF', style: TextStyle(color: Color(0xFF8B7355))),
                 ),
               ],
             ),
@@ -673,5 +689,52 @@ class ReportsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static Future<void> _downloadPeakHoursPdf(BuildContext context, ReportsProvider provider) async {
+    try {
+      final bytes = await PdfReportService.generatePeakHoursReport(provider.hourlyData);
+      final filename = 'peak-hours-report-${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final path = await savePdfToFile(bytes, filename);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(path != null ? 'PDF saved to: $path' : 'PDF download is supported on desktop (Windows/macOS/Linux) only.'),
+            backgroundColor: path != null ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  static Future<void> _downloadWeeklyPdf(BuildContext context, ReportsProvider provider) async {
+    try {
+      final bytes = await PdfReportService.generateWeeklyReservationsReport(
+        provider.weeklyOccupancy,
+        provider.reservationsSummary,
+      );
+      final filename = 'weekly-reservations-report-${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final path = await savePdfToFile(bytes, filename);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(path != null ? 'PDF saved to: $path' : 'PDF download is supported on desktop (Windows/macOS/Linux) only.'),
+            backgroundColor: path != null ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }

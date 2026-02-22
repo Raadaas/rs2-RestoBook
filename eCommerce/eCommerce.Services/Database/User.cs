@@ -50,7 +50,6 @@ namespace eCommerce.Services.Database
         public bool IsClient { get; set; } = true;
         
         // Navigation properties
-        public ICollection<UserPreference> UserPreferences { get; set; } = new List<UserPreference>();
         public ICollection<Restaurant> OwnedRestaurants { get; set; } = new List<Restaurant>();
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
@@ -61,6 +60,5 @@ namespace eCommerce.Services.Database
         public ICollection<ChatMessage> SentMessages { get; set; } = new List<ChatMessage>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<ReservationHistory> ChangedReservationHistories { get; set; } = new List<ReservationHistory>();
-        public ICollection<UserBehavior> UserBehaviors { get; set; } = new List<UserBehavior>();
     }
 } 

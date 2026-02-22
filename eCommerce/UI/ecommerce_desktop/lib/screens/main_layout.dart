@@ -13,6 +13,7 @@ import 'package:ecommerce_desktop/model/user.dart';
 import 'package:ecommerce_desktop/providers/restaurant_provider.dart';
 import 'package:ecommerce_desktop/providers/user_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/screens/login_screen.dart';
 
 class MainLayout extends StatefulWidget {
   final int restaurantId;
@@ -83,6 +84,16 @@ class _MainLayoutState extends State<MainLayout> {
       );
     }
     return _screens[_selectedIndex];
+  }
+
+  void _handleLogout() {
+    AuthProvider.username = null;
+    AuthProvider.password = null;
+    AuthProvider.userId = null;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
   }
 
   final List<NavigationItem> _navigationItems = [
@@ -178,6 +189,36 @@ class _MainLayoutState extends State<MainLayout> {
                 const Spacer(),
                 // Profile Section
                 _buildProfileSection(),
+                const SizedBox(height: 8),
+                // Logout
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: InkWell(
+                    onTap: _handleLogout,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout, color: Colors.red[700], size: 22),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: Colors.red[700],
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
               ],
             ),

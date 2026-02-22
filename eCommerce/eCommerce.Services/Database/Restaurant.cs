@@ -77,7 +77,6 @@ namespace eCommerce.Services.Database
         public ICollection<SpecialOffer> SpecialOffers { get; set; } = new List<SpecialOffer>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public ICollection<RestaurantStatistic> Statistics { get; set; } = new List<RestaurantStatistic>();
-        public ICollection<UserBehavior> UserBehaviors { get; set; } = new List<UserBehavior>();
         public ICollection<ChatConversation> ChatConversations { get; set; } = new List<ChatConversation>();
         public ICollection<Reward> Rewards { get; set; } = new List<Reward>();
     }

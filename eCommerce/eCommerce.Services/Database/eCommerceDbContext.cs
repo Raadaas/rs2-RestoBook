@@ -12,7 +12,6 @@ namespace eCommerce.Services.Database
         public DbSet<City> Cities { get; set; }
         public DbSet<CuisineType> CuisineTypes { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
-        public DbSet<UserPreference> UserPreferences { get; set; }
         public DbSet<RestaurantGallery> RestaurantGalleries { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<SpecialOffer> SpecialOffers { get; set; }
@@ -28,7 +27,6 @@ namespace eCommerce.Services.Database
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<RestaurantStatistic> RestaurantStatistics { get; set; }
-        public DbSet<UserBehavior> UserBehaviors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,19 +74,6 @@ namespace eCommerce.Services.Database
                 .HasOne(r => r.CuisineType)
                 .WithMany(ct => ct.Restaurants)
                 .HasForeignKey(r => r.CuisineTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
-                
-            // Configure UserPreference relationships
-            modelBuilder.Entity<UserPreference>()
-                .HasOne(up => up.User)
-                .WithMany(u => u.UserPreferences)
-                .HasForeignKey(up => up.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            modelBuilder.Entity<UserPreference>()
-                .HasOne(up => up.CuisineType)
-                .WithMany(ct => ct.UserPreferences)
-                .HasForeignKey(up => up.CuisineTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
                 
             // Configure RestaurantGallery relationship
@@ -280,19 +265,6 @@ namespace eCommerce.Services.Database
                 .WithMany(r => r.Statistics)
                 .HasForeignKey(rs => rs.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
-            // Configure UserBehavior relationships
-            modelBuilder.Entity<UserBehavior>()
-                .HasOne(ub => ub.User)
-                .WithMany(u => u.UserBehaviors)
-                .HasForeignKey(ub => ub.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            modelBuilder.Entity<UserBehavior>()
-                .HasOne(ub => ub.Restaurant)
-                .WithMany(r => r.UserBehaviors)
-                .HasForeignKey(ub => ub.RestaurantId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 } 
