@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/screens/reports_screen.dart';
 import 'package:ecommerce_desktop/screens/menu_screen.dart';
 import 'package:ecommerce_desktop/screens/all_reservations_screen.dart';
 import 'package:ecommerce_desktop/screens/chat_screen.dart';
+import 'package:ecommerce_desktop/screens/notifications_screen.dart';
 import 'package:ecommerce_desktop/screens/rewards_screen.dart';
 import 'package:ecommerce_desktop/screens/profile_details_screen.dart';
 import 'package:ecommerce_desktop/models/restaurant_model.dart';
@@ -72,6 +73,7 @@ class _MainLayoutState extends State<MainLayout> {
     MenuScreen(restaurantId: widget.restaurantId),
     AllReservationsScreen(restaurantId: widget.restaurantId),
     ChatScreen(restaurantId: widget.restaurantId),
+    NotificationsScreen(restaurantId: widget.restaurantId),
     RewardsScreen(restaurantId: widget.restaurantId),
   ];
 
@@ -124,6 +126,10 @@ class _MainLayoutState extends State<MainLayout> {
     NavigationItem(
       icon: Icons.chat,
       label: 'Chat',
+    ),
+    NavigationItem(
+      icon: Icons.notifications,
+      label: 'Notifications',
     ),
     NavigationItem(
       icon: Icons.card_giftcard,

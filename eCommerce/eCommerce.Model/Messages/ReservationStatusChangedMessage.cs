@@ -16,5 +16,9 @@ namespace eCommerce.Model.Messages
         public DateTime ReservationDate { get; set; }
         public TimeSpan ReservationTime { get; set; }
         public string? CancellationReason { get; set; }
+        /// <summary>When > 0, notification goes to this user (admin). When 0, goes to UserId (client).</summary>
+        public int RecipientUserId { get; set; }
+        /// <summary>Client name for admin-facing notification text.</summary>
+        public string? ClientName { get; set; }
     }
 }

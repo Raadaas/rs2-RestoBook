@@ -25,11 +25,13 @@ await bus.PubSub.SubscribeAsync<ReservationStatusChangedMessage>(
     "reservation_status_notifications",
     async msg =>
     {
-        var (title, message) = BuildNotificationText(msg);
+        var recipientUserId = msg.RecipientUserId > 0 ? msg.RecipientUserId : msg.UserId;
+        var isForAdmin = msg.RecipientUserId > 0;
+        var (title, message) = BuildNotificationText(msg, isForAdmin);
         await using var context = new eCommerceDbContext(dbContextOptions);
         context.Notifications.Add(new Notification
         {
-            UserId = msg.UserId,
+            UserId = recipientUserId,
             Type = "ReservationStatusChanged",
             Title = title,
             Message = message,
@@ -43,11 +45,37 @@ await bus.PubSub.SubscribeAsync<ReservationStatusChangedMessage>(
 Console.WriteLine("Subscriber listening for reservation status changes. Press any key to exit.");
 Console.ReadKey();
 
-static (string Title, string Message) BuildNotificationText(ReservationStatusChangedMessage msg)
+static (string Title, string Message) BuildNotificationText(ReservationStatusChangedMessage msg, bool isForAdmin)
 {
     var dateStr = msg.ReservationDate.ToString("yyyy-MM-dd");
     var timeStr = $"{msg.ReservationTime.Hours:D2}:{msg.ReservationTime.Minutes:D2}";
     var place = string.IsNullOrWhiteSpace(msg.RestaurantName) ? "your reservation" : msg.RestaurantName;
+    var clientName = string.IsNullOrWhiteSpace(msg.ClientName) ? "Client" : msg.ClientName;
+
+    if (isForAdmin)
+    {
+        return msg.NewState switch
+        {
+            "Requested" => (
+                "New reservation request",
+                $"{clientName} has requested a reservation on {dateStr} at {timeStr}."
+            ),
+            "Cancelled" => (
+                "Reservation cancelled by client",
+                string.IsNullOrWhiteSpace(msg.CancellationReason)
+                    ? $"{clientName} cancelled their reservation on {dateStr} at {timeStr}."
+                    : $"{clientName} cancelled their reservation on {dateStr} at {timeStr}. Reason: {msg.CancellationReason}"
+            ),
+            "Expired" => (
+                "Reservation expired",
+                $"{clientName}'s unconfirmed reservation on {dateStr} at {timeStr} has expired."
+            ),
+            _ => (
+                "Reservation update",
+                $"{clientName}'s reservation on {dateStr} at {timeStr} is now {msg.NewState}."
+            )
+        };
+    }
 
     return msg.NewState switch
     {
@@ -61,9 +89,9 @@ static (string Title, string Message) BuildNotificationText(ReservationStatusCha
                 ? $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled."
                 : $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled. Reason: {msg.CancellationReason}"
         ),
-        "Completed" => (
-            "Reservation completed",
-            $"Your reservation at {place} on {dateStr} at {timeStr} has been marked as completed. Thank you!"
+        "Expired" => (
+            "Reservation expired",
+            $"Your unconfirmed reservation at {place} on {dateStr} at {timeStr} has expired."
         ),
         _ => (
             "Reservation update",

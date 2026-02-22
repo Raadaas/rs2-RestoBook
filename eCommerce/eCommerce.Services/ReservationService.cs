@@ -431,6 +431,8 @@ namespace eCommerce.Services
             {
                 throw new InvalidOperationException("Failed to reload reservation after creation.");
             }
+
+            _ = PublishStatusChangedAsync(entity, "", "Requested", null, entity.Restaurant?.OwnerId ?? 0, $"{entity.User?.FirstName} {entity.User?.LastName}".Trim());
             
             return MapToResponse(entity);
         }
@@ -624,8 +626,7 @@ namespace eCommerce.Services
             entity.Confirm();
             await _context.SaveChangesAsync();
 
-            await SaveNotificationToDatabaseAsync(entity, "Confirmed", null);
-            _ = PublishStatusChangedAsync(entity, ReservationState.Requested.ToString(), ReservationState.Confirmed.ToString(), cancellationReason: null);
+            _ = PublishStatusChangedAsync(entity, ReservationState.Requested.ToString(), ReservationState.Confirmed.ToString(), null, 0, null);
 
             // Reload with navigation properties
             entity = await _context.Reservations
@@ -637,7 +638,7 @@ namespace eCommerce.Services
             return MapToResponse(entity);
         }
 
-        public async Task<ReservationResponse> CancelReservationAsync(int id, string? reason = null)
+        public async Task<ReservationResponse> CancelReservationAsync(int id, int currentUserId, string? reason = null)
         {
             var entity = await _context.Reservations
                 .Include(r => r.User)
@@ -654,8 +655,10 @@ namespace eCommerce.Services
             entity.Cancel(reason);
             await _context.SaveChangesAsync();
 
-            await SaveNotificationToDatabaseAsync(entity, "Cancelled", entity.CancellationReason);
-            _ = PublishStatusChangedAsync(entity, previousState.ToString(), ReservationState.Cancelled.ToString(), entity.CancellationReason);
+            var isClientCancelling = currentUserId == entity.UserId;
+            var recipientUserId = isClientCancelling ? (entity.Restaurant?.OwnerId ?? 0) : 0;
+            var clientName = isClientCancelling ? $"{entity.User?.FirstName} {entity.User?.LastName}".Trim() : null;
+            _ = PublishStatusChangedAsync(entity, previousState.ToString(), ReservationState.Cancelled.ToString(), entity.CancellationReason, recipientUserId, clientName);
 
             // Reload with navigation properties
             entity = await _context.Reservations
@@ -684,9 +687,6 @@ namespace eCommerce.Services
             await _loyaltyService.AddPointsForCompletedReservationAsync(entity);
             await _context.SaveChangesAsync();
 
-            await SaveNotificationToDatabaseAsync(entity, "Completed", null);
-            _ = PublishStatusChangedAsync(entity, ReservationState.Confirmed.ToString(), ReservationState.Completed.ToString(), cancellationReason: null);
-
             // Reload with navigation properties
             entity = await _context.Reservations
                 .Include(r => r.User)
@@ -697,52 +697,7 @@ namespace eCommerce.Services
             return MapToResponse(entity);
         }
 
-        private async Task SaveNotificationToDatabaseAsync(Database.Reservation entity, string newState, string? cancellationReason)
-        {
-            var (title, message) = BuildNotificationText(
-                entity.Restaurant?.Name ?? "",
-                entity.ReservationDate,
-                entity.ReservationTime,
-                newState,
-                cancellationReason);
-            _context.Notifications.Add(new Database.Notification
-            {
-                UserId = entity.UserId,
-                Type = "ReservationStatusChanged",
-                Title = title,
-                Message = message,
-                RelatedReservationId = entity.Id,
-                IsRead = false,
-                SentAt = DateTime.UtcNow
-            });
-            await _context.SaveChangesAsync();
-        }
-
-        private static (string Title, string Message) BuildNotificationText(string restaurantName, DateTime reservationDate, TimeSpan reservationTime, string newState, string? cancellationReason)
-        {
-            var dateStr = reservationDate.ToString("yyyy-MM-dd");
-            var timeStr = $"{reservationTime.Hours:D2}:{reservationTime.Minutes:D2}";
-            var place = string.IsNullOrWhiteSpace(restaurantName) ? "your reservation" : restaurantName;
-            return newState switch
-            {
-                "Confirmed" => (
-                    "Reservation confirmed",
-                    $"Your reservation at {place} on {dateStr} at {timeStr} has been confirmed."),
-                "Cancelled" => (
-                    "Reservation cancelled",
-                    string.IsNullOrWhiteSpace(cancellationReason)
-                        ? $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled."
-                        : $"Your reservation at {place} on {dateStr} at {timeStr} has been cancelled. Reason: {cancellationReason}"),
-                "Completed" => (
-                    "Reservation completed",
-                    $"Your reservation at {place} on {dateStr} at {timeStr} has been marked as completed. Thank you!"),
-                _ => (
-                    "Reservation update",
-                    $"Your reservation at {place} on {dateStr} at {timeStr} is now {newState}.")
-            };
-        }
-
-        private Task PublishStatusChangedAsync(Database.Reservation entity, string previousState, string newState, string? cancellationReason)
+        private Task PublishStatusChangedAsync(Database.Reservation entity, string previousState, string newState, string? cancellationReason, int recipientUserId = 0, string? clientName = null)
         {
             var message = new ReservationStatusChangedMessage
             {
@@ -753,7 +708,9 @@ namespace eCommerce.Services
                 RestaurantName = entity.Restaurant?.Name ?? "",
                 ReservationDate = entity.ReservationDate,
                 ReservationTime = entity.ReservationTime,
-                CancellationReason = cancellationReason
+                CancellationReason = cancellationReason,
+                RecipientUserId = recipientUserId,
+                ClientName = clientName
             };
             return PublishMessageInBackgroundAsync(message);
         }

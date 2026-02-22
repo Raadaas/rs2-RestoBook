@@ -1,4 +1,5 @@
 using eCommerce.Model;
+using eCommerce.Model.Messages;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -71,10 +72,14 @@ namespace eCommerce.Services
                 .Where(r => r.State == ReservationState.Confirmed)
                 .ToListAsync(cancellationToken);
 
-            // Find all requested reservations
+            // Find all requested reservations (include Restaurant and User for notifications)
             var requestedReservations = await dbContext.Reservations
+                .Include(r => r.Restaurant)
+                .Include(r => r.User)
                 .Where(r => r.State == ReservationState.Requested)
                 .ToListAsync(cancellationToken);
+
+            var notificationPublisher = scope.ServiceProvider.GetService<IReservationNotificationPublisher>();
 
             var completedCount = 0;
             var expiredCount = 0;
@@ -125,6 +130,26 @@ namespace eCommerce.Services
                     {
                         reservation.Expire();
                         expiredCount++;
+                        if (notificationPublisher != null)
+                        {
+                            var clientName = $"{reservation.User?.FirstName} {reservation.User?.LastName}".Trim();
+                            var ownerId = reservation.Restaurant?.OwnerId ?? 0;
+                            var msg = new ReservationStatusChangedMessage
+                            {
+                                ReservationId = reservation.Id,
+                                UserId = reservation.UserId,
+                                NewState = "Expired",
+                                RestaurantName = reservation.Restaurant?.Name ?? "",
+                                ReservationDate = reservation.ReservationDate,
+                                ReservationTime = reservation.ReservationTime,
+                                RecipientUserId = ownerId,
+                                ClientName = string.IsNullOrEmpty(clientName) ? "Client" : clientName
+                            };
+                            _ = notificationPublisher.PublishReservationStatusChangedAsync(msg);
+                            msg.RecipientUserId = 0;
+                            msg.ClientName = null;
+                            _ = notificationPublisher.PublishReservationStatusChangedAsync(msg);
+                        }
                         _logger.LogInformation(
                             "Auto-expired reservation {ReservationId} (EndTime: {EndTime:yyyy-MM-dd HH:mm:ss})",
                             reservation.Id,

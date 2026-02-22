@@ -14,7 +14,7 @@ namespace eCommerce.Services
         Task<List<ReservationResponse>> GetTodayReservationsByStateAsync(ReservationState state, int? restaurantId = null);
         Task<List<ReservationResponse>> GetAllReservationsByStateAsync(ReservationState state, int? restaurantId = null);
         Task<ReservationResponse> ConfirmReservationAsync(int id);
-        Task<ReservationResponse> CancelReservationAsync(int id, string? reason = null);
+        Task<ReservationResponse> CancelReservationAsync(int id, int currentUserId, string? reason = null);
         Task<ReservationResponse> CompleteReservationAsync(int id);
     }
 }

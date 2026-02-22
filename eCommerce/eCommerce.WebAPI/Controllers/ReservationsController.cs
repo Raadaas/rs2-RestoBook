@@ -5,7 +5,9 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace eCommerce.WebAPI.Controllers
@@ -73,7 +75,8 @@ namespace eCommerce.WebAPI.Controllers
         {
             try
             {
-                var result = await _reservationService.CancelReservationAsync(id, request?.Reason);
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+                var result = await _reservationService.CancelReservationAsync(id, currentUserId, request?.Reason);
                 return Ok(result);
             }
             catch (System.InvalidOperationException ex)
