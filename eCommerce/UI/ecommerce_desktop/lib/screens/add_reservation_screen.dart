@@ -79,6 +79,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _fieldErrors = Map.from(_fieldErrors)..remove('reservationDate');
       });
     }
   }
@@ -91,6 +92,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
+        _fieldErrors = Map.from(_fieldErrors)..remove('reservationTime');
       });
     }
   }
@@ -102,16 +104,18 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
 
     final userId = AuthProvider.userId;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
+      setState(() {
+        _error = 'User not logged in';
+        _fieldErrors = {};
+      });
       return;
     }
 
     if (_selectedTableId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a table')),
-      );
+      setState(() {
+        _error = null;
+        _fieldErrors = {'tableId': 'Please select a table'};
+      });
       return;
     }
 
@@ -160,34 +164,36 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
       }
     } catch (e) {
       if (e is ValidationException) {
+        const keyMap = {
+          'TableId': 'tableId', 'tableId': 'tableId',
+          'ReservationDate': 'reservationDate', 'reservationDate': 'reservationDate',
+          'ReservationTime': 'reservationTime', 'reservationTime': 'reservationTime',
+          'NumberOfGuests': 'numberOfGuests', 'numberOfGuests': 'numberOfGuests',
+          'SpecialRequests': 'specialRequests', 'specialRequests': 'specialRequests',
+        };
         final map = <String, String>{};
+        String? generalError;
         e.errors.forEach((k, v) {
-          if (v.isNotEmpty) map[k] = v.first;
-        });
-        setState(() {
-          _fieldErrors = map;
-          _error = null;
+          if (v.isNotEmpty) {
+            if (k == 'userError') {
+              generalError = v.first;
+            } else {
+              map[keyMap[k] ?? k] = v.first;
+            }
+          }
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          setState(() {
+            _fieldErrors = map;
+            _error = generalError;
+          });
         }
       } else {
-        setState(() {
-          _fieldErrors = {};
-          _error = e.toString().replaceFirst('Exception: ', '');
-        });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _fieldErrors = {};
+            _error = e.toString().replaceFirst('Exception: ', '');
+          });
         }
       }
     } finally {
@@ -195,6 +201,32 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
         _isSubmitting = false;
       });
     }
+  }
+
+  static InputDecoration _inputDecoration(String label, String? errorText) {
+    return InputDecoration(
+      labelText: label,
+      errorText: errorText,
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF8B7355), width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.red[400]!, width: 1),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    );
   }
 
   @override
@@ -220,15 +252,52 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Table Dropdown
+                    Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B7355).withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.table_restaurant_rounded,
+                                  color: Color(0xFF8B7355),
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              const Text(
+                                'Reservation Details',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
                     DropdownButtonFormField<int>(
                       value: _selectedTableId,
-                      decoration: InputDecoration(
-                        labelText: 'Table',
-                        errorText: _fieldErrors['tableId'],
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: _inputDecoration('Table', _fieldErrors['tableId']).copyWith(
+                        prefixIcon: Icon(Icons.table_restaurant_rounded, color: Colors.grey[500], size: 22),
                       ),
                       items: _tables.map((table) {
                         return DropdownMenuItem<int>(
@@ -239,6 +308,7 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                       onChanged: (value) {
                         setState(() {
                           _selectedTableId = value;
+                          _fieldErrors = Map.from(_fieldErrors)..remove('tableId');
                         });
                       },
                       validator: (value) {
@@ -246,18 +316,12 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Date Picker
+                    const SizedBox(height: 20),
                     InkWell(
                       onTap: _selectDate,
+                      borderRadius: BorderRadius.circular(12),
                       child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Reservation Date',
-                          errorText: _fieldErrors['reservationDate'],
-                          border: const OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
+                        decoration: _inputDecoration('Reservation Date', _fieldErrors['reservationDate']).copyWith(
                           suffixIcon: const Icon(Icons.calendar_today),
                         ),
                         child: Text(
@@ -266,18 +330,12 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Time Picker
+                    const SizedBox(height: 20),
                     InkWell(
                       onTap: _selectTime,
+                      borderRadius: BorderRadius.circular(12),
                       child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Reservation Time',
-                          errorText: _fieldErrors['reservationTime'],
-                          border: const OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
+                        decoration: _inputDecoration('Reservation Time', _fieldErrors['reservationTime']).copyWith(
                           suffixIcon: const Icon(Icons.access_time),
                         ),
                         child: Text(
@@ -286,16 +344,11 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Duration
+                    const SizedBox(height: 20),
                     DropdownButtonFormField<int>(
                       value: _durationHours,
-                      decoration: const InputDecoration(
-                        labelText: 'Duration (hours)',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: _inputDecoration('Duration (hours)', null).copyWith(
+                        prefixIcon: Icon(Icons.schedule_rounded, color: Colors.grey[500], size: 22),
                       ),
                       items: [1, 2, 3, 4, 5, 6].map((hours) {
                         return DropdownMenuItem<int>(
@@ -309,17 +362,11 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Number of Guests
+                    const SizedBox(height: 20),
                     TextFormField(
                       initialValue: _numberOfGuests.toString(),
-                      decoration: InputDecoration(
-                        labelText: 'Number of Guests',
-                        errorText: _fieldErrors['numberOfGuests'],
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: _inputDecoration('Number of Guests', _fieldErrors['numberOfGuests']).copyWith(
+                        prefixIcon: Icon(Icons.people_rounded, color: Colors.grey[500], size: 22),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -334,63 +381,81 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
                       onChanged: (value) {
                         final guests = int.tryParse(value);
                         if (guests != null && guests > 0) {
-                          _numberOfGuests = guests;
+                          setState(() {
+                            _numberOfGuests = guests;
+                            _fieldErrors = Map.from(_fieldErrors)..remove('numberOfGuests');
+                          });
                         }
                       },
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Special Requests
+                    const SizedBox(height: 20),
                     TextFormField(
                       initialValue: _specialRequests,
-                      decoration: InputDecoration(
-                        labelText: 'Special Requests (optional)',
-                        errorText: _fieldErrors['specialRequests'],
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: _inputDecoration('Special Requests (optional)', _fieldErrors['specialRequests']).copyWith(
+                        prefixIcon: Icon(Icons.note_rounded, color: Colors.grey[500], size: 22),
+                        alignLabelWithHint: true,
                       ),
                       maxLines: 3,
                       onChanged: (value) {
-                        _specialRequests = value;
+                        setState(() {
+                          _specialRequests = value;
+                          _fieldErrors = Map.from(_fieldErrors)..remove('specialRequests');
+                        });
                       },
                     ),
-                    const SizedBox(height: 24),
-                    
-                    // Error message
-                    if (_error != null)
+                        ],
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           _error!,
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(color: Colors.red[700], fontSize: 14),
                         ),
                       ),
-                    
-                    // Submit Button
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitReservation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B7355),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              'Create Reservation',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                    ],
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          ),
+                          child: Text('Cancel', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitReservation,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B7355),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add_rounded, size: 20),
+                                    SizedBox(width: 10),
+                                    Text('Create Reservation'),
+                                  ],
+                                ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

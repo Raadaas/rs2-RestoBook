@@ -106,23 +106,47 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                             builder: (context, menuProvider, child) {
                               return Column(
                                 children: [
-                                  // Add Item button
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: Padding(
                                       padding: const EdgeInsets.only(bottom: 16),
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => _showAddItemDialog(context, menuProvider, null),
-                                        icon: const Icon(Icons.add, color: Colors.white),
-                                        label: const Text(
-                                          'Add Item',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF8B6F47),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () => _showAddItemDialog(context, menuProvider, null),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [Color(0xFF8B7355), Color(0xFFA08060)],
+                                              ),
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFF8B7355).withOpacity(0.35),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                                                SizedBox(width: 10),
+                                                Text(
+                                                  'Add Menu Item',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -178,18 +202,43 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                                     alignment: Alignment.centerRight,
                                     child: Padding(
                                       padding: const EdgeInsets.only(bottom: 16),
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => _showAddSpecialDialog(context, specialProvider, null),
-                                        icon: const Icon(Icons.add, color: Colors.white),
-                                        label: const Text(
-                                          'Add Special',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF8B6F47),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () => _showAddSpecialDialog(context, specialProvider, null),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [Color(0xFF8B7355), Color(0xFFA08060)],
+                                              ),
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFF8B7355).withOpacity(0.35),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                                                SizedBox(width: 10),
+                                                Text(
+                                                  'Add Special',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -619,14 +668,42 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
       'Molluscs',
     ];
 
+    final inputDeco = (String hint, String? err) => InputDecoration(
+      hintText: hint,
+      errorText: err,
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!, width: 1)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8B7355), width: 2)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red[400]!, width: 1)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      prefixIcon: Icon(Icons.restaurant_rounded, color: Colors.grey[500], size: 22),
+    );
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: const Color(0xFFF5F5F0),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(item == null ? 'Add New Menu Item' : 'Edit Menu Item'),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B7355).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.restaurant_menu_rounded, color: Color(0xFF8B7355), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(item == null ? 'Add New Menu Item' : 'Edit Menu Item', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
@@ -640,35 +717,19 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Item Name
-                  const Text(
-                    'Item Name *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
                   TextField(
                     controller: nameController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Margherita Pizza',
-                      errorText: fieldErrors['name'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('e.g. Margherita Pizza', fieldErrors['name']).copyWith(
+                      labelText: 'Item Name',
+                      prefixIcon: Icon(Icons.restaurant_rounded, color: Colors.grey[500], size: 22),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Category
-                  const Text(
-                    'Category *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
-                    decoration: InputDecoration(
-                      hintText: 'Select category',
-                      errorText: fieldErrors['category'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('Select category', fieldErrors['category']).copyWith(
+                      labelText: 'Category',
+                      prefixIcon: Icon(Icons.category_rounded, color: Colors.grey[500], size: 22),
                     ),
                     items: categories.map((category) {
                       return DropdownMenuItem(
@@ -682,38 +743,23 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-                  // Description
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: descriptionController,
                     maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'Describe the dish...',
-                      errorText: fieldErrors['description'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('Describe the dish...', fieldErrors['description']).copyWith(
+                      labelText: 'Description',
+                      prefixIcon: Icon(Icons.description_rounded, color: Colors.grey[500], size: 22),
+                      alignLabelWithHint: true,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Price
-                  const Text(
-                    'Price *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      hintText: '0.00',
-                      errorText: fieldErrors['price'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('0.00', fieldErrors['price']).copyWith(
+                      labelText: 'Price',
+                      prefixIcon: Icon(Icons.attach_money_rounded, color: Colors.grey[500], size: 22),
                     ),
                     onTap: () {
                       if (priceController.text == '0.00') {
@@ -724,21 +770,15 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
-                  // Image
-                  const Text(
-                    'Image',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  // Preview of selected or existing image
+                  const SizedBox(height: 20),
                   Container(
                     height: 150,
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[50],
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -757,64 +797,38 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                                       item.imageUrl!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
-                                        return const Center(
-                                          child: Icon(Icons.image, size: 48),
-                                        );
+                                        return const Center(child: Icon(Icons.image, size: 48));
                                       },
                                     )
-                                  : const Center(
-                                      child: Icon(Icons.image, size: 48, color: Colors.grey),
-                                    ),
+                                  : const Center(child: Icon(Icons.image, size: 48, color: Colors.grey)),
                     ),
                   ),
-                  // File picker button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        debugPrint('Choose file button pressed');
                         try {
-                          // Use rootNavigator to ensure file picker works from dialog
                           final result = await FilePicker.platform.pickFiles(
                             type: FileType.image,
                             allowMultiple: false,
                             withData: false,
                             withReadStream: false,
                           );
-
-                          debugPrint('File picker result: $result');
-                          
                           if (result != null && result.files.isNotEmpty) {
                             final filePath = result.files.single.path;
-                            debugPrint('Selected file path: $filePath');
-                            
                             if (filePath != null) {
                               final file = File(filePath);
                               final originalBytes = await file.readAsBytes();
-                              
-                              // Decode and compress image
                               final decodedImage = img.decodeImage(originalBytes);
                               if (decodedImage != null) {
-                                // Start with aggressive compression - max 300px on longest side
                                 img.Image resized = decodedImage;
                                 if (decodedImage.width > 300 || decodedImage.height > 300) {
-                                  if (decodedImage.width > decodedImage.height) {
-                                    resized = img.copyResize(decodedImage, width: 300);
-                                  } else {
-                                    resized = img.copyResize(decodedImage, height: 300);
-                                  }
+                                  resized = decodedImage.width > decodedImage.height
+                                      ? img.copyResize(decodedImage, width: 300)
+                                      : img.copyResize(decodedImage, height: 300);
                                 }
-                                
-                                // Encode as JPEG with quality 60 to minimize size
-                                Uint8List compressedBytes = Uint8List.fromList(
-                                  img.encodeJpg(resized, quality: 60)
-                                );
-                                String dataUrl = 'data:image/jpeg;base64,${base64Encode(compressedBytes)}';
-                                
-                                debugPrint('Original size: ${originalBytes.length} bytes');
-                                debugPrint('Compressed size: ${compressedBytes.length} bytes');
-                                debugPrint('Base64 URL length: ${dataUrl.length} characters');
-                                
+                                final compressedBytes = Uint8List.fromList(img.encodeJpg(resized, quality: 60));
+                                final dataUrl = 'data:image/jpeg;base64,${base64Encode(compressedBytes)}';
                                 setState(() {
                                   selectedImageFile = file;
                                   selectedImageDataUrl = dataUrl;
@@ -825,15 +839,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                               }
                             }
                           }
-                        } catch (e, stackTrace) {
-                          debugPrint('Error picking image: $e');
-                          debugPrint('Stack trace: $stackTrace');
+                        } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error picking image: $e'),
-                                duration: const Duration(seconds: 5),
-                              ),
+                              SnackBar(content: Text('Error picking image: $e'), duration: const Duration(seconds: 5)),
                             );
                           }
                         }
@@ -841,9 +850,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       icon: const Icon(Icons.image, size: 20),
                       label: const Text('Choose Image File'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B6F47),
+                        backgroundColor: const Color(0xFF8B7355),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -863,24 +874,19 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                           icon: const Icon(Icons.clear, size: 16),
                           label: const Text('Clear selected image'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: Colors.red[700],
+                            side: BorderSide(color: Colors.red[400]!),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  // Dietary & Allergen Information
-                  const Text(
-                    'Dietary & Allergen Information',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
                     value: selectedAllergen,
-                    decoration: const InputDecoration(
-                      hintText: 'Select allergen',
-                      border: OutlineInputBorder(),
+                    decoration: inputDeco('Select allergen', null).copyWith(
+                      labelText: 'Dietary & Allergen',
+                      prefixIcon: Icon(Icons.warning_amber_rounded, color: Colors.grey[500], size: 22),
                     ),
                     items: allergens.map((allergen) {
                       return DropdownMenuItem(
@@ -966,14 +972,6 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                     fieldErrors.clear();
                     fieldErrors.addAll(e.firstErrors);
                   });
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.message),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
                 } catch (e, stackTrace) {
                   debugPrint('Error saving menu item: $e');
                   debugPrint('Stack trace: $stackTrace');
@@ -988,10 +986,17 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                   }
                 }
               },
-              icon: const Icon(Icons.add, color: Colors.white, size: 18),
-              label: Text(item == null ? 'Add Item' : 'Update Item'),
+              icon: Icon(item == null ? Icons.add_rounded : Icons.check_rounded, color: Colors.white, size: 20),
+              label: Text(
+                item == null ? 'Add Item' : 'Update Item',
+                style: const TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B6F47),
+                backgroundColor: const Color(0xFF8B7355),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
             ),
           ],
@@ -1207,14 +1212,42 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     DateTime? validFrom = special?.validFrom ?? DateTime.now();
     DateTime? validTo = special?.validTo ?? DateTime.now().add(const Duration(days: 30));
 
+    final inputDeco = (String hint, String? err) => InputDecoration(
+      hintText: hint,
+      errorText: err,
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!, width: 1)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8B7355), width: 2)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red[400]!, width: 1)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      prefixIcon: Icon(Icons.local_offer_rounded, color: Colors.grey[500], size: 22),
+    );
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: const Color(0xFFF5F5F0),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(special == null ? 'Add New Special' : 'Edit Special'),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B7355).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.local_offer_rounded, color: Color(0xFF8B7355), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(special == null ? 'Add New Special' : 'Edit Special', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
@@ -1228,53 +1261,30 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
-                  const Text(
-                    'Title *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
                   TextField(
                     controller: titleController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Weekend Brunch Special',
-                      errorText: fieldErrors['title'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('e.g. Weekend Brunch Special', fieldErrors['title']).copyWith(
+                      labelText: 'Title',
+                      prefixIcon: Icon(Icons.title_rounded, color: Colors.grey[500], size: 22),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Description
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: descriptionController,
                     maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'Describe the special...',
-                      errorText: fieldErrors['description'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('Describe the special...', fieldErrors['description']).copyWith(
+                      labelText: 'Description',
+                      prefixIcon: Icon(Icons.description_rounded, color: Colors.grey[500], size: 22),
+                      alignLabelWithHint: true,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Discount/Price
-                  const Text(
-                    'Price *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   TextField(
                     controller: priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      hintText: '0.00',
-                      errorText: fieldErrors['price'],
-                      border: const OutlineInputBorder(),
-                      errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                    decoration: inputDeco('0.00', fieldErrors['price']).copyWith(
+                      labelText: 'Price',
+                      prefixIcon: Icon(Icons.attach_money_rounded, color: Colors.grey[500], size: 22),
                     ),
                     onTap: () {
                       if (priceController.text == '0.00') {
@@ -1285,13 +1295,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
-                  // Valid From
-                  const Text(
-                    'Valid From *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   InkWell(
                     onTap: () async {
                       final date = await showDatePicker(
@@ -1307,11 +1311,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                     child: InputDecorator(
-                      decoration: InputDecoration(
-                        errorText: fieldErrors['validFrom'],
-                        border: const OutlineInputBorder(),
-                        suffixIcon: const Icon(Icons.calendar_today),
-                        errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                      decoration: inputDeco('Select date', fieldErrors['validFrom']).copyWith(
+                        labelText: 'Valid From',
+                        suffixIcon: Icon(Icons.calendar_today, color: Colors.grey[500], size: 22),
+                        prefixIcon: Icon(Icons.event_rounded, color: Colors.grey[500], size: 22),
                       ),
                       child: Text(
                         validFrom != null
@@ -1320,13 +1323,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Valid To
-                  const Text(
-                    'Valid To *',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   InkWell(
                     onTap: () async {
                       final date = await showDatePicker(
@@ -1342,11 +1339,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       }
                     },
                     child: InputDecorator(
-                      decoration: InputDecoration(
-                        errorText: fieldErrors['validTo'],
-                        border: const OutlineInputBorder(),
-                        suffixIcon: const Icon(Icons.calendar_today),
-                        errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red)),
+                      decoration: inputDeco('Select date', fieldErrors['validTo']).copyWith(
+                        labelText: 'Valid To',
+                        suffixIcon: Icon(Icons.calendar_today, color: Colors.grey[500], size: 22),
+                        prefixIcon: Icon(Icons.event_rounded, color: Colors.grey[500], size: 22),
                       ),
                       child: Text(
                         validTo != null
@@ -1412,14 +1408,6 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                     fieldErrors.clear();
                     fieldErrors.addAll(e.firstErrors);
                   });
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.message),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
                 } catch (e, stackTrace) {
                   debugPrint('Error saving special: $e');
                   debugPrint('Stack trace: $stackTrace');
@@ -1435,9 +1423,16 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                 }
               },
               icon: const Icon(Icons.add, color: Colors.white, size: 18),
-              label: Text(special == null ? 'Add Special' : 'Update Special'),
+              label: Text(
+                special == null ? 'Add Special' : 'Update Special',
+                style: const TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B6F47),
+                backgroundColor: const Color(0xFF8B7355),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
             ),
           ],

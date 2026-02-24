@@ -5,6 +5,7 @@ import 'package:ecommerce_mobile/model/user.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/user_provider.dart';
 import 'package:ecommerce_mobile/providers/validation_exception.dart';
+import 'package:ecommerce_mobile/screens/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
@@ -231,6 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? errorText,
     TextInputType? keyboardType,
     bool obscureText = false,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,6 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             hintText: hint,
             errorText: errorText,
             prefixIcon: Icon(icon, size: 22, color: Colors.grey[600]),
+            suffixIcon: suffixIcon,
             filled: true,
             fillColor: _beige,
             border: OutlineInputBorder(
@@ -345,6 +348,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = _user;
     if (user == null) return;
 
+    Map<String, String> dialogErrors = {};
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
     void disposeControllers() {
       currentController.dispose();
       newController.dispose();
@@ -373,7 +381,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: currentController,
                     icon: Icons.lock_outline,
                     hint: 'Enter current password',
-                    obscureText: true,
+                    obscureText: obscureCurrent,
+                    errorText: dialogErrors['currentPassword'],
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureCurrent ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[600],
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        obscureCurrent = !obscureCurrent;
+                        setDialog(() {});
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _input(
@@ -381,7 +401,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: newController,
                     icon: Icons.lock_outline,
                     hint: 'At least 6 characters',
-                    obscureText: true,
+                    obscureText: obscureNew,
+                    errorText: dialogErrors['newPassword'] ?? dialogErrors['password'],
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureNew ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[600],
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        obscureNew = !obscureNew;
+                        setDialog(() {});
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _input(
@@ -389,8 +421,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: confirmController,
                     icon: Icons.lock_outline,
                     hint: 'Confirm new password',
-                    obscureText: true,
+                    obscureText: obscureConfirm,
+                    errorText: dialogErrors['confirmPassword'],
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[600],
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        obscureConfirm = !obscureConfirm;
+                        setDialog(() {});
+                      },
+                    ),
                   ),
+                  if (dialogErrors['_general'] != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      dialogErrors['_general']!,
+                      style: TextStyle(color: Colors.red[700], fontSize: 13),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -407,22 +458,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   final current = currentController.text;
                   final newPwd = newController.text;
                   final confirm = confirmController.text;
+
+                  final err = <String, String>{};
                   if (current.isEmpty) {
-                    _showSnack('Enter current password');
-                    return;
+                    err['currentPassword'] = 'Enter current password';
                   }
                   if (newPwd.length < 6) {
-                    _showSnack('New password must be at least 6 characters');
-                    return;
+                    err['newPassword'] = 'New password must be at least 6 characters';
                   }
                   if (newPwd != confirm) {
-                    _showSnack('New passwords do not match');
+                    err['confirmPassword'] = 'New passwords do not match';
+                  }
+                  if (newPwd.isNotEmpty && newPwd == current) {
+                    err['newPassword'] = err['newPassword'] ?? 'New password must differ from current';
+                  }
+                  if (err.isNotEmpty) {
+                    dialogErrors = err;
+                    setDialog(() {});
                     return;
                   }
-                  if (newPwd == current) {
-                    _showSnack('New password must differ from current');
-                    return;
-                  }
+
+                  dialogErrors = {};
+                  setDialog(() {});
+
                   try {
                     final request = {
                       'firstName': user.firstName,
@@ -440,12 +498,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
                     disposeControllersAfterRouteRemoved();
-                    await _load(showLoading: false);
+                    AuthProvider.username = null;
+                    AuthProvider.password = null;
+                    AuthProvider.userId = null;
                     if (!mounted) return;
-                    _showSnack('Password changed');
-                    AuthProvider.password = newPwd;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (route) => false,
+                    );
+                  } on ValidationException catch (e) {
+                    const keyMap = {
+                      'CurrentPassword': 'currentPassword',
+                      'currentPassword': 'currentPassword',
+                      'Password': 'newPassword',
+                      'password': 'newPassword',
+                      'userError': 'currentPassword',
+                    };
+                    final map = <String, String>{};
+                    e.errors.forEach((k, v) {
+                      if (v.isNotEmpty) {
+                        map[keyMap[k] ?? k] = v.first;
+                      }
+                    });
+                    dialogErrors = map;
+                    if (ctx.mounted) setDialog(() {});
                   } catch (e) {
-                    if (mounted) _showSnack('Error: ${e.toString().replaceFirst('Exception: ', '')}');
+                    if (ctx.mounted) {
+                      dialogErrors = {
+                        '_general': e.toString().replaceFirst('Exception: ', ''),
+                      };
+                      setDialog(() {});
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(

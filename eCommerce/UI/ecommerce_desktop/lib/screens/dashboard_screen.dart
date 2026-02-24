@@ -61,8 +61,10 @@ class DashboardScreen extends StatelessWidget {
                     title: 'Dashboard',
                     subtitle: "Today's overview and reservations",
                     icon: Icons.dashboard_rounded,
-                    trailing: ElevatedButton.icon(
-                        onPressed: () async {
+                    trailing: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -71,22 +73,44 @@ class DashboardScreen extends StatelessWidget {
                               ),
                             ),
                           );
-                          // Refresh dashboard if reservation was created
-                          if (result == true) {
-                            provider.loadDashboardData();
-                          }
+                          if (result == true) provider.loadDashboardData();
                         },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Reservation'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B7355),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF8B7355), Color(0xFFA08060)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF8B7355).withOpacity(0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                              SizedBox(width: 10),
+                              Text(
+                                'Add Reservation',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   // Top Row: Today's Reservations and Current Occupancy

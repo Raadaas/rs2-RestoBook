@@ -24,6 +24,22 @@ class BookReservationScreen extends StatefulWidget {
   State<BookReservationScreen> createState() => _BookReservationScreenState();
 }
 
+/// Maps backend validation field names to UI field keys.
+const Map<String, String> _backendFieldToUi = {
+  'TableId': 'table',
+  'tableId': 'table',
+  'ReservationDate': 'date',
+  'reservationDate': 'date',
+  'ReservationTime': 'time',
+  'reservationTime': 'time',
+  'Duration': 'duration',
+  'duration': 'duration',
+  'NumberOfGuests': 'guests',
+  'numberOfGuests': 'guests',
+  'SpecialRequests': 'specialRequests',
+  'specialRequests': 'specialRequests',
+};
+
 class _BookReservationScreenState extends State<BookReservationScreen> {
   List<Map<String, dynamic>> _tables = [];
   int? _selectedTableId;
@@ -33,6 +49,9 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
   String _selectedDuration = '02:00:00';
   String _specialRequests = '';
   bool _loading = true;
+  Map<String, String> _fieldErrors = {};
+  String? _generalError;
+  final ScrollController _scrollController = ScrollController();
 
   static const Map<String, String> _durationOptions = {
     '1 minute': '00:01:00',
@@ -50,6 +69,12 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
   void initState() {
     super.initState();
     _loadTables();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTables() async {
@@ -84,18 +109,57 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
     }
   }
 
+  void _clearErrors() {
+    setState(() {
+      _fieldErrors = {};
+      _generalError = null;
+    });
+  }
+
+  void _setFieldError(String key, String message) {
+    setState(() {
+      _fieldErrors = {..._fieldErrors, key: message};
+      _generalError = null;
+    });
+    _scrollToFirstError();
+  }
+
+  void _setErrorsFromValidation(ValidationException e) {
+    final fieldErrors = <String, String>{};
+    for (final entry in e.errors.entries) {
+      final uiKey = _backendFieldToUi[entry.key] ?? entry.key;
+      if (entry.value.isNotEmpty) {
+        fieldErrors[uiKey] = entry.value.first;
+      }
+    }
+    setState(() {
+      _fieldErrors = fieldErrors;
+      _generalError = fieldErrors.isEmpty ? e.message : null;
+    });
+    _scrollToFirstError();
+  }
+
+  void _scrollToFirstError() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   Future<void> _submit() async {
+    _clearErrors();
     final userId = AuthProvider.userId;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to make a reservation')),
-      );
+      setState(() => _generalError = 'Please log in to make a reservation');
+      _scrollToFirstError();
       return;
     }
     if (_selectedTableId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a table')),
-      );
+      _setFieldError('table', 'Please select a table');
       return;
     }
     setState(() => _submitting = true);
@@ -129,15 +193,18 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
         );
         Navigator.pop(context, true);
       }
-    } catch (e) {
+    } on ValidationException catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
-        final String message = e is ValidationException
-            ? (e as ValidationException).message
-            : 'Something went wrong. Please try again.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        _setErrorsFromValidation(e);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _generalError = 'Something went wrong. Please try again.';
+        });
+        _scrollToFirstError();
       }
     }
   }
@@ -162,6 +229,7 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
       body: _loading
           ? Center(child: CircularProgressIndicator(color: _brown))
           : SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -193,17 +261,62 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
                       ),
                     )
                   else ...[
-                    _buildSection('Select table', _buildTableMatrix()),
+                    _buildSection('Select table', _buildTableMatrix(), errorKey: 'table'),
                     const SizedBox(height: 20),
-                    _buildSection('Date', _buildDateField()),
+                    _buildSection('Date', _buildDateField(), errorKey: 'date'),
                     const SizedBox(height: 20),
-                    _buildSection('Time', _buildTimeField()),
+                    _buildSection('Time', _buildTimeField(), errorKey: 'time'),
                     const SizedBox(height: 20),
-                    _buildSection('Duration', _buildDurationDropdown()),
+                    _buildSection('Duration', _buildDurationDropdown(), errorKey: 'duration'),
                     const SizedBox(height: 20),
-                    _buildSection('Guests', _buildGuestsSelector()),
+                    _buildSection('Guests', _buildGuestsSelector(), errorKey: 'guests'),
                     const SizedBox(height: 20),
-                    _buildSection('Special requests (optional)', _buildSpecialRequestsField()),
+                    _buildSection('Special requests (optional)', _buildSpecialRequestsField(), errorKey: 'specialRequests'),
+                    if (_generalError != null || _fieldErrors.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade400, width: 1.5),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.red.shade800, size: 22),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Validation errors:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.red.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_generalError != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                _generalError!,
+                                style: TextStyle(fontSize: 13, color: Colors.red.shade900),
+                              ),
+                            ],
+                            ..._fieldErrors.entries.map((e) => Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    '• ${e.value}',
+                                    style: TextStyle(fontSize: 13, color: Colors.red.shade900),
+                                  ),
+                                )),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
@@ -236,7 +349,8 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
     );
   }
 
-  Widget _buildSection(String label, Widget child) {
+  Widget _buildSection(String label, Widget child, {String? errorKey}) {
+    final error = errorKey != null ? _fieldErrors[errorKey] : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -249,7 +363,23 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        child,
+        InputDecorator(
+          decoration: InputDecoration(
+            errorText: error,
+            errorStyle: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            isDense: true,
+          ),
+          child: child,
+        ),
       ],
     );
   }
@@ -309,7 +439,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
                       return Expanded(
                         child: GestureDetector(
                           onTap: table != null
-                              ? () => setState(() => _selectedTableId = id)
+                              ? () => setState(() {
+                                    _selectedTableId = id;
+                                    _fieldErrors = Map.from(_fieldErrors)..remove('table');
+                                  })
                               : null,
                           child: Container(
                             margin: const EdgeInsets.all(2),
@@ -382,7 +515,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
               final number = t['tableNumber'] ?? '?';
               final capacity = t['capacity'] ?? 0;
               return GestureDetector(
-                onTap: () => setState(() => _selectedTableId = id),
+                onTap: () => setState(() {
+                  _selectedTableId = id;
+                  _fieldErrors = Map.from(_fieldErrors)..remove('table');
+                }),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
@@ -427,7 +563,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
           firstDate: DateTime.now(),
           lastDate: DateTime.now().add(const Duration(days: 365)),
         );
-        if (picked != null) setState(() => _selectedDate = picked);
+        if (picked != null) setState(() {
+          _selectedDate = picked;
+          _fieldErrors = Map.from(_fieldErrors)..remove('date');
+        });
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -457,7 +596,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
           context: context,
           initialTime: _selectedTime,
         );
-        if (picked != null) setState(() => _selectedTime = picked);
+        if (picked != null) setState(() {
+          _selectedTime = picked;
+          _fieldErrors = Map.from(_fieldErrors)..remove('time');
+        });
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -498,7 +640,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
               child: Text(e.key),
             );
           }).toList(),
-          onChanged: (v) => setState(() => _selectedDuration = v ?? '02:00:00'),
+          onChanged: (v) => setState(() {
+            _selectedDuration = v ?? '02:00:00';
+            _fieldErrors = Map.from(_fieldErrors)..remove('duration');
+          }),
         ),
       ),
     );
@@ -516,7 +661,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: _numberOfGuests > 1 ? () => setState(() => _numberOfGuests--) : null,
+            onPressed: _numberOfGuests > 1 ? () => setState(() {
+              _numberOfGuests--;
+              _fieldErrors = Map.from(_fieldErrors)..remove('guests');
+            }) : null,
             icon: Icon(Icons.remove_circle_outline, color: _brown.withOpacity(0.8)),
           ),
           Text(
@@ -524,7 +672,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: _brown),
           ),
           IconButton(
-            onPressed: () => setState(() => _numberOfGuests++),
+            onPressed: () => setState(() {
+              _numberOfGuests++;
+              _fieldErrors = Map.from(_fieldErrors)..remove('guests');
+            }),
             icon: Icon(Icons.add_circle_outline, color: _brown.withOpacity(0.8)),
           ),
         ],
@@ -534,7 +685,10 @@ class _BookReservationScreenState extends State<BookReservationScreen> {
 
   Widget _buildSpecialRequestsField() {
     return TextField(
-      onChanged: (v) => setState(() => _specialRequests = v),
+      onChanged: (v) => setState(() {
+        _specialRequests = v;
+        _fieldErrors = Map.from(_fieldErrors)..remove('specialRequests');
+      }),
       maxLines: 3,
       decoration: InputDecoration(
         hintText: 'Allergies, preferences, etc.',

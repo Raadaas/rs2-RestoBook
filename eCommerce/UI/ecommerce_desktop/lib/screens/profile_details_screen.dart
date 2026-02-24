@@ -13,6 +13,7 @@ import 'package:ecommerce_desktop/providers/restaurant_gallery_provider.dart';
 import 'package:ecommerce_desktop/providers/validation_exception.dart';
 import 'package:ecommerce_desktop/models/restaurant_gallery_model.dart';
 import 'package:ecommerce_desktop/widgets/screen_title_header.dart';
+import 'package:ecommerce_desktop/screens/login_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -840,14 +841,6 @@ const Text(
                   }
                 } on ValidationException catch (e) {
                   setState(() => _userFormErrors = e.firstErrors);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.message),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -997,11 +990,12 @@ const Text(
     bool showCurrentPassword = false;
     bool showNewPassword = false;
     bool showConfirmPassword = false;
+    Map<String, String> passwordErrors = {};
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setDialogState) => AlertDialog(
           title: const Text('Security Settings'),
           content: SizedBox(
             width: 400,
@@ -1021,8 +1015,10 @@ const Text(
                 TextField(
                   controller: currentPasswordController,
                   obscureText: !showCurrentPassword,
+                  onChanged: (_) => setDialogState(() => passwordErrors = Map.from(passwordErrors)..remove('currentPassword')),
                   decoration: InputDecoration(
                     hintText: 'Enter current password',
+                    errorText: passwordErrors['currentPassword'],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1034,7 +1030,7 @@ const Text(
                         color: Colors.grey[600],
                       ),
                       onPressed: () {
-                        setState(() {
+                        setDialogState(() {
                           showCurrentPassword = !showCurrentPassword;
                         });
                       },
@@ -1054,8 +1050,10 @@ const Text(
                 TextField(
                   controller: newPasswordController,
                   obscureText: !showNewPassword,
+                  onChanged: (_) => setDialogState(() => passwordErrors = Map.from(passwordErrors)..remove('newPassword')..remove('confirmPassword')),
                   decoration: InputDecoration(
                     hintText: 'Enter new password',
+                    errorText: passwordErrors['newPassword'],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1067,7 +1065,7 @@ const Text(
                         color: Colors.grey[600],
                       ),
                       onPressed: () {
-                        setState(() {
+                        setDialogState(() {
                           showNewPassword = !showNewPassword;
                         });
                       },
@@ -1087,8 +1085,10 @@ const Text(
                 TextField(
                   controller: confirmPasswordController,
                   obscureText: !showConfirmPassword,
+                  onChanged: (_) => setDialogState(() => passwordErrors = Map.from(passwordErrors)..remove('confirmPassword')),
                   decoration: InputDecoration(
                     hintText: 'Confirm new password',
+                    errorText: passwordErrors['confirmPassword'],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1100,7 +1100,7 @@ const Text(
                         color: Colors.grey[600],
                       ),
                       onPressed: () {
-                        setState(() {
+                        setDialogState(() {
                           showConfirmPassword = !showConfirmPassword;
                         });
                       },
@@ -1131,30 +1131,22 @@ const Text(
             ElevatedButton(
               onPressed: () async {
                 if (currentPasswordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter your current password')),
-                  );
+                  setDialogState(() => passwordErrors = {'currentPassword': 'Please enter your current password'});
                   return;
                 }
 
                 if (newPasswordController.text != confirmPasswordController.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('New passwords do not match')),
-                  );
+                  setDialogState(() => passwordErrors = {'confirmPassword': 'New passwords do not match'});
                   return;
                 }
 
                 if (newPasswordController.text.length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Password must be at least 6 characters')),
-                  );
+                  setDialogState(() => passwordErrors = {'newPassword': 'Password must be at least 6 characters'});
                   return;
                 }
 
                 if (newPasswordController.text == currentPasswordController.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('New password must be different from current password')),
-                  );
+                  setDialogState(() => passwordErrors = {'newPassword': 'New password must be different from current password'});
                   return;
                 }
 
@@ -1175,19 +1167,36 @@ const Text(
                   };
 
                   await _userProvider.update(_currentUser.id, request);
-                  await _refreshData();
 
                   if (mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Password changed successfully')),
+                    AuthProvider.username = null;
+                    AuthProvider.password = null;
+                    AuthProvider.userId = null;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (_) => false,
                     );
+                  }
+                } on ValidationException catch (e) {
+                  if (mounted) {
+                    final map = <String, String>{};
+                    if (e.firstErrorFor('CurrentPassword') != null || e.firstErrorFor('currentPassword') != null) {
+                      map['currentPassword'] = e.firstErrorFor('CurrentPassword') ?? e.firstErrorFor('currentPassword')!;
+                    }
+                    if (e.firstErrorFor('Password') != null || e.firstErrorFor('password') != null) {
+                      map['newPassword'] = e.firstErrorFor('Password') ?? e.firstErrorFor('password')!;
+                    }
+                    if (map.isEmpty) {
+                      map['currentPassword'] = e.message;
+                    }
+                    setDialogState(() => passwordErrors = map);
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error changing password: ${e.toString()}')),
-                    );
+                    setDialogState(() => passwordErrors = {
+                      'currentPassword': 'Error changing password: ${e.toString().replaceFirst('Exception: ', '')}'
+                    });
                   }
                 }
               },
@@ -1949,14 +1958,6 @@ const Text(
                             }
                           } on ValidationException catch (e) {
                             setState(() => _restaurantFormErrors = e.firstErrors);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(e.message),
-                                  backgroundColor: Colors.orange,
-                                ),
-                              );
-                            }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

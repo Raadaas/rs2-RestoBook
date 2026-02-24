@@ -30,6 +30,7 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
   int? _selectedPositionY;
   bool _isSaving = false;
   bool _isAdding = false;
+  Map<String, String> _fieldErrors = {};
 
   @override
   void initState() {
@@ -96,44 +97,34 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
   Future<void> _saveTable() async {
     if (_selectedTable == null) return;
     if (_tableNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a table number')),
-      );
+      setState(() => _fieldErrors = {'tableNumber': 'Please enter a table number'});
       return;
     }
     if (_selectedTableType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a table type')),
-      );
+      setState(() => _fieldErrors = {'tableType': 'Please select a table type'});
       return;
     }
     if (_selectedPositionX == null || _selectedPositionY == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select X and Y positions')),
-      );
+      setState(() => _fieldErrors = {'position': 'Please select X and Y positions'});
       return;
     }
 
-    // Validate position range (1-10)
-    if (_selectedPositionX! < 1 || _selectedPositionX! > 10 || 
-        _selectedPositionY! < 1 || _selectedPositionY! > 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Position X and Y must be between 1 and 10')),
-      );
+    // Validate position range (1-8)
+    if (_selectedPositionX! < 1 || _selectedPositionX! > 8 || 
+        _selectedPositionY! < 1 || _selectedPositionY! > 8) {
+      setState(() => _fieldErrors = {'position': 'Position X and Y must be between 1 and 8'});
       return;
     }
 
     // Check if position is already occupied by another table
-    // Convert 1-indexed to 0-indexed for matrix lookup
     final existingTable = _getTableAtPosition(_selectedPositionY! - 1, _selectedPositionX! - 1);
     if (existingTable != null && existingTable.id != _selectedTable!.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This position is already occupied by another table')),
-      );
+      setState(() => _fieldErrors = {'position': 'This position is already occupied by another table'});
       return;
     }
 
     setState(() {
+      _fieldErrors = {};
       _isSaving = true;
     });
 
@@ -171,44 +162,34 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
 
   Future<void> _addTable() async {
     if (_tableNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a table number')),
-      );
+      setState(() => _fieldErrors = {'tableNumber': 'Please enter a table number'});
       return;
     }
     if (_selectedTableType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a table type')),
-      );
+      setState(() => _fieldErrors = {'tableType': 'Please select a table type'});
       return;
     }
     if (_selectedPositionX == null || _selectedPositionY == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select X and Y positions')),
-      );
+      setState(() => _fieldErrors = {'position': 'Please select X and Y positions'});
       return;
     }
 
-    // Validate position range (1-10)
-    if (_selectedPositionX! < 1 || _selectedPositionX! > 10 || 
-        _selectedPositionY! < 1 || _selectedPositionY! > 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Position X and Y must be between 1 and 10')),
-      );
+    // Validate position range (1-8)
+    if (_selectedPositionX! < 1 || _selectedPositionX! > 8 || 
+        _selectedPositionY! < 1 || _selectedPositionY! > 8) {
+      setState(() => _fieldErrors = {'position': 'Position X and Y must be between 1 and 8'});
       return;
     }
 
     // Check if position is already occupied
-    // Convert 1-indexed to 0-indexed for matrix lookup
     final existingTable = _getTableAtPosition(_selectedPositionY! - 1, _selectedPositionX! - 1);
     if (existingTable != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This position is already occupied')),
-      );
+      setState(() => _fieldErrors = {'position': 'This position is already occupied'});
       return;
     }
 
     setState(() {
+      _fieldErrors = {};
       _isAdding = true;
     });
 
@@ -327,7 +308,7 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
 
   table_model.Table? _getTableAtPosition(int row, int col) {
     try {
-      // Note: row and col are 0-indexed in the matrix (0-9), but positions in DB are 1-indexed (1-10)
+      // Note: row and col are 0-indexed in the matrix (0-7), positions in DB are 1-indexed (1-8)
       // So if position in DB is (1,1), it should be at matrix position (0,0)
       // We need to convert: matrix (row, col) -> DB position (row+1, col+1)
       final dbX = col + 1;
@@ -416,8 +397,8 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
   }
 
   Widget _buildFloorPlan() {
-    const int rows = 10;
-    const int cols = 10;
+    const int rows = 8;
+    const int cols = 8;
     
     return Container(
       decoration: BoxDecoration(
@@ -497,9 +478,11 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
           // Table Number
           TextField(
             controller: _tableNumberController,
-            decoration: const InputDecoration(
+            onChanged: (_) => setState(() => _fieldErrors = Map.from(_fieldErrors)..remove('tableNumber')),
+            decoration: InputDecoration(
               labelText: 'Table Number',
-              border: OutlineInputBorder(),
+              errorText: _fieldErrors['tableNumber'],
+              border: const OutlineInputBorder(),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -530,9 +513,10 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
           // Table Type Dropdown
           DropdownButtonFormField<String>(
             value: _selectedTableType,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Table Type',
-              border: OutlineInputBorder(),
+              errorText: _fieldErrors['tableType'],
+              border: const OutlineInputBorder(),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -545,32 +529,35 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
             onChanged: (value) {
               setState(() {
                 _selectedTableType = value;
+                _fieldErrors = Map.from(_fieldErrors)..remove('tableType');
               });
             },
           ),
           const SizedBox(height: 16),
-          // Position X and Y
+          // Position X and Y (8x8 matrix)
           Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
                   value: _selectedPositionX,
-                  decoration: const InputDecoration(
-                    labelText: 'Position X (1-10)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Position X (1-8)',
+                    errorText: _fieldErrors['position'],
+                    border: const OutlineInputBorder(),
                     filled: true,
                     fillColor: Colors.white,
                   ),
-                  items: List.generate(10, (index) => index + 1).map((x) {
+                  items: List.generate(8, (index) => index + 1).map((x) {
                     return DropdownMenuItem(
                       value: x,
                       child: Text('$x'),
                     );
                   }).toList(),
                   onChanged: (value) {
-                    if (value != null && value >= 1 && value <= 10) {
+                    if (value != null && value >= 1 && value <= 8) {
                       setState(() {
                         _selectedPositionX = value;
+                        _fieldErrors = Map.from(_fieldErrors)..remove('position');
                       });
                     }
                   },
@@ -580,22 +567,24 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
               Expanded(
                 child: DropdownButtonFormField<int>(
                   value: _selectedPositionY,
-                  decoration: const InputDecoration(
-                    labelText: 'Position Y (1-10)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Position Y (1-8)',
+                    errorText: _fieldErrors['position'],
+                    border: const OutlineInputBorder(),
                     filled: true,
                     fillColor: Colors.white,
                   ),
-                  items: List.generate(10, (index) => index + 1).map((y) {
+                  items: List.generate(8, (index) => index + 1).map((y) {
                     return DropdownMenuItem(
                       value: y,
                       child: Text('$y'),
                     );
                   }).toList(),
                   onChanged: (value) {
-                    if (value != null && value >= 1 && value <= 10) {
+                    if (value != null && value >= 1 && value <= 8) {
                       setState(() {
                         _selectedPositionY = value;
+                        _fieldErrors = Map.from(_fieldErrors)..remove('position');
                       });
                     }
                   },
