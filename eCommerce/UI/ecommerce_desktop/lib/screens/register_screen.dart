@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:ecommerce_desktop/model/user.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/screens/login_screen.dart';
 import 'package:ecommerce_desktop/screens/restaurant_selection_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -134,22 +135,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = false);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-        final userData = decoded is Map && decoded['data'] != null ? decoded['data'] as Map : decoded as Map;
-        final user = User.fromJson(Map<String, dynamic>.from(userData));
-        AuthProvider.username = _usernameController.text.trim();
-        AuthProvider.password = password;
-        AuthProvider.userId = user.id;
         if (mounted) {
-          final msg = decoded is Map && decoded['message'] != null ? decoded['message'] as String : 'Registration successful.';
+          final msg = 'Registration successful. Please log in.';
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
         }
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RestaurantSelectionScreen(user: user),
-          ),
-        );
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
       } else {
         _applyValidationErrors(response.body);
       }

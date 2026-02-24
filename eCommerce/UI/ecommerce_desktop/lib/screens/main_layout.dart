@@ -89,9 +89,7 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   void _handleLogout() {
-    AuthProvider.username = null;
-    AuthProvider.password = null;
-    AuthProvider.userId = null;
+    AuthProvider.clear();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,

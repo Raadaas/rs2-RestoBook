@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
+import 'package:ecommerce_mobile/screens/login_page.dart';
 import 'package:ecommerce_mobile/screens/main_screen.dart';
 import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:flutter/material.dart';
@@ -131,22 +132,16 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() => _isLoading = false);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-        final userData = decoded is Map && decoded['data'] != null ? decoded['data'] as Map : decoded as Map;
-        final String successMessage = decoded is Map && decoded['message'] != null ? decoded['message'] as String : 'Registration successful.';
-        if (userData['id'] != null) {
-          AuthProvider.userId = userData['id'] as int;
-        }
-        AuthProvider.username = _usernameController.text.trim();
-        AuthProvider.password = password;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+            const SnackBar(content: Text('Registration successful. Please log in.'), backgroundColor: Colors.green),
           );
         }
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        }
       } else {
         _applyValidationErrors(response.body);
       }

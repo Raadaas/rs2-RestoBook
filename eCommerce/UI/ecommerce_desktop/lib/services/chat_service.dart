@@ -13,14 +13,11 @@ class ChatService {
   }
 
   static Map<String, String> _createHeaders() {
-    String username = AuthProvider.username ?? "";
-    String password = AuthProvider.password ?? "";
-    String basicAuth = "Basic ${base64Encode(utf8.encode('$username:$password'))}";
-
-    return {
-      "Content-Type": "application/json",
-      "Authorization": basicAuth,
-    };
+    final t = AuthProvider.token;
+    final auth = t != null && t.isNotEmpty
+        ? "Bearer $t"
+        : "Basic ${base64Encode(utf8.encode('${AuthProvider.username ?? ""}:${AuthProvider.password ?? ""}'))}";
+    return {"Content-Type": "application/json", "Authorization": auth};
   }
 
   static Future<List<ChatConversation>> getRestaurantConversations(

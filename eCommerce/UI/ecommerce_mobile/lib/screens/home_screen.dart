@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:ecommerce_mobile/app_styles.dart';
 import 'package:ecommerce_mobile/model/restaurant.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/providers/favorite_provider.dart';
+import 'package:ecommerce_mobile/providers/restaurant_gallery_provider.dart';
 import 'package:ecommerce_mobile/screens/restaurant_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Restaurant> _recommended = [];
   bool _loading = true;
+  final Map<int, String?> _restaurantImageCache = {};
 
   @override
   void initState() {
@@ -27,14 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadRecommended() async {
     setState(() => _loading = true);
+    _restaurantImageCache.clear();
     try {
       final list = await context.read<RestaurantProvider>().getRecommended(count: 10);
-      if (mounted) {
-        setState(() {
-          _recommended = list;
-          _loading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _recommended = list;
+        _loading = false;
+      });
+      _loadRestaurantImages(list);
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -43,6 +49,52 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
+  }
+
+  Future<void> _loadRestaurantImages(List<Restaurant> restaurants) async {
+    if (restaurants.isEmpty) return;
+    final galleryProvider = context.read<RestaurantGalleryProvider>();
+    final results = await Future.wait(
+      restaurants.map((r) async {
+        final gallery = await galleryProvider.getByRestaurant(r.id);
+        return MapEntry(r.id, gallery.isNotEmpty ? gallery.first.imageUrl : null);
+      }),
+    );
+    if (!mounted) return;
+    setState(() {
+      for (final e in results) {
+        _restaurantImageCache[e.key] = e.value;
+      }
+    });
+  }
+
+  Widget _buildRestaurantImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image/')) {
+      try {
+        final base64String = imageUrl.split(',').length > 1 ? imageUrl.split(',')[1] : '';
+        if (base64String.isEmpty) return _buildPlaceholder();
+        return Image.memory(
+          base64Decode(base64String),
+          fit: BoxFit.cover,
+          width: 100,
+          height: 100,
+          errorBuilder: (_, __, ___) => _buildPlaceholder(),
+        );
+      } catch (_) {
+        return _buildPlaceholder();
+      }
+    }
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: 100,
+      height: 100,
+      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Icon(Icons.restaurant, color: Colors.grey[600], size: 40);
   }
 
   @override
@@ -149,17 +201,20 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
               ),
-              child: Icon(Icons.restaurant, color: Colors.grey[600], size: 40),
+              child: Container(
+                width: 100,
+                height: 100,
+                color: Colors.grey[300],
+                child: _restaurantImageCache[restaurant.id] != null &&
+                        _restaurantImageCache[restaurant.id]!.isNotEmpty
+                    ? _buildRestaurantImage(_restaurantImageCache[restaurant.id]!)
+                    : _buildPlaceholder(),
+              ),
             ),
             Expanded(
               child: Padding(

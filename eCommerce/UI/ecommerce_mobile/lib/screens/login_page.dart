@@ -57,17 +57,24 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = false);
 
       if (response.statusCode == 200) {
-        final userData = jsonDecode(response.body) as Map<String, dynamic>;
-        final user = User.fromJson(userData);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final token = data['token'] as String?;
+        final userData = data['user'];
+        if (token == null || userData == null) {
+          _showError("Invalid login response.");
+          return;
+        }
+        final user = User.fromJson(userData as Map<String, dynamic>);
         if (!user.isClient) {
           _showError(
             "This account does not have access to the mobile app. Only client users can sign in here.",
           );
           return;
         }
+        AuthProvider.token = token;
         AuthProvider.userId = user.id;
-        AuthProvider.username = username;
-        AuthProvider.password = password;
+        AuthProvider.username = user.username;
+        AuthProvider.password = null;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );

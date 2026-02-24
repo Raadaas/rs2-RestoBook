@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/product_provider.dart';
 import 'package:ecommerce_mobile/providers/restaurant_provider.dart';
 import 'package:ecommerce_mobile/providers/cuisine_type_provider.dart';
@@ -13,7 +14,15 @@ import 'package:provider/provider.dart';
 
 const Color _brown = Color(0xFF8B7355);
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
+  AuthProvider.onUnauthorized = () {
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  };
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider<ProductProvider>(
         create: (context) => ProductProvider()),
@@ -42,6 +51,7 @@ class MyLoginApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: _brown,

@@ -2,6 +2,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
+using eCommerce.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -15,10 +16,12 @@ namespace eCommerce.WebAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IJwtTokenService _jwtTokenService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IJwtTokenService jwtTokenService)
         {
             _userService = userService;
+            _jwtTokenService = jwtTokenService;
         }
 
         [HttpGet]
@@ -72,12 +75,13 @@ namespace eCommerce.WebAPI.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<UserResponse>> Login([FromBody] UserLoginRequest request)
+        public async Task<ActionResult<object>> Login([FromBody] UserLoginRequest request)
         {
             var user = await _userService.AuthenticateAsync(request);
             if (user == null)
                 return Unauthorized(new { message = "Invalid username or password." });
-            return Ok(user);
+            var token = _jwtTokenService.GenerateToken(user);
+            return Ok(new { token, user });
         }
     }
 } 

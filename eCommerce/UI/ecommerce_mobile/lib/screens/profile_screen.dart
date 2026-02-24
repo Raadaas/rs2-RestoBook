@@ -247,9 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           onTap: () {
-                            AuthProvider.username = null;
-                            AuthProvider.password = null;
-                            AuthProvider.userId = null;
+                            AuthProvider.clear();
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(builder: (_) => LoginPage()),
                               (_) => false,

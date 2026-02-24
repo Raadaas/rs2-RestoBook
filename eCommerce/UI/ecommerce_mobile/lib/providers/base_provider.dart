@@ -17,6 +17,13 @@ abstract class BaseProvider<T> with ChangeNotifier {
         defaultValue: "http://10.0.2.2:5121/api/");
   }
 
+  static String _jwtLog() {
+    final t = AuthProvider.token;
+    if (t == null || t.isEmpty) return '(none)';
+    final preview = t.length > 40 ? '${t.substring(0, 40)}...' : t;
+    return 'Bearer $preview (length: ${t.length})';
+  }
+
   Future<SearchResult<T>> get({dynamic filter}) async {
     var url = "$_baseUrl$_endpoint";
 
@@ -30,7 +37,11 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
     var headers = createHeaders();
 
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     var response = await http.get(uri, headers: headers);
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (isValidResponse(response)) {
       var data = jsonDecode(response.body);
@@ -45,7 +56,6 @@ abstract class BaseProvider<T> with ChangeNotifier {
     } else {
       throw new Exception("Unknown error");
     }
-    // print("response: ${response.request} ${response.statusCode}, ${response.body}");
   }
 
   Future<T> insert(dynamic request) async {
@@ -53,8 +63,12 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
     var headers = createHeaders();
 
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     var jsonRequest = jsonEncode(request);
     var response = await http.post(uri, headers: headers, body: jsonRequest);
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 400) {
       _throwValidationException(response.body);
@@ -65,6 +79,8 @@ abstract class BaseProvider<T> with ChangeNotifier {
       return fromJson(data);
     }
     if (response.statusCode == 401) {
+      AuthProvider.clear();
+      AuthProvider.onUnauthorized?.call();
       throw Exception("Unauthorized");
     }
     throw Exception("Something went wrong. Please try again.");
@@ -75,8 +91,12 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
     var headers = createHeaders();
 
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     var jsonRequest = jsonEncode(request);
     var response = await http.put(uri, headers: headers, body: jsonRequest);
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 400) {
       _throwValidationException(response.body);
@@ -87,6 +107,8 @@ abstract class BaseProvider<T> with ChangeNotifier {
       return fromJson(data);
     }
     if (response.statusCode == 401) {
+      AuthProvider.clear();
+      AuthProvider.onUnauthorized?.call();
       throw Exception("Unauthorized");
     }
     throw Exception("Something went wrong. Please try again.");
@@ -116,7 +138,13 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var url = "$_baseUrl$_endpoint/$id";
     var uri = Uri.parse(url);
     var headers = createHeaders();
+
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     var response = await http.delete(uri, headers: headers);
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
     if (!isValidResponse(response)) throw new Exception("Delete failed");
   }
 
@@ -128,7 +156,9 @@ abstract class BaseProvider<T> with ChangeNotifier {
     if (response.statusCode < 299) {
       return true;
     } else if (response.statusCode == 401) {
-      throw new Exception("Unauthorized");
+      AuthProvider.clear();
+      AuthProvider.onUnauthorized?.call();
+      throw Exception("Unauthorized");
     } else {
       print(response.body);
       throw new Exception("Something bad happened please try again");
@@ -136,19 +166,14 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Map<String, String> createHeaders() {
-    String username = AuthProvider.username ?? "";
-    String password = AuthProvider.password ?? "";
-
-    print("passed creds: $username, $password");
-
-    String basicAuth =
-        "Basic ${base64Encode(utf8.encode('$username:$password'))}";
-
-    var headers = {
-      "Content-Type": "application/json",
-      "Authorization": basicAuth
-    };
-
+    final t = AuthProvider.token;
+    final auth = t != null && t.isNotEmpty
+        ? "Bearer $t"
+        : (AuthProvider.username != null && AuthProvider.password != null
+            ? "Basic ${base64Encode(utf8.encode('${AuthProvider.username}:${AuthProvider.password}'))}"
+            : null);
+    var headers = <String, String>{"Content-Type": "application/json"};
+    if (auth != null) headers["Authorization"] = auth;
     return headers;
   }
 

@@ -1170,9 +1170,7 @@ const Text(
 
                   if (mounted) {
                     Navigator.pop(context);
-                    AuthProvider.username = null;
-                    AuthProvider.password = null;
-                    AuthProvider.userId = null;
+                    AuthProvider.clear();
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                       (_) => false,

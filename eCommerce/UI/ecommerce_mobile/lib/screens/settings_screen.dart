@@ -498,9 +498,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
                     disposeControllersAfterRouteRemoved();
-                    AuthProvider.username = null;
-                    AuthProvider.password = null;
-                    AuthProvider.userId = null;
+                    AuthProvider.clear();
                     if (!mounted) return;
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const LoginPage()),

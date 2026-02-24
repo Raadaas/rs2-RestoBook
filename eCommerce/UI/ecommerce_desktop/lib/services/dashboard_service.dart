@@ -13,19 +13,24 @@ class DashboardService {
   }
 
   static Map<String, String> _createHeaders() {
-    String username = AuthProvider.username ?? "";
-    String password = AuthProvider.password ?? "";
-    String basicAuth = "Basic ${base64Encode(utf8.encode('$username:$password'))}";
+    final t = AuthProvider.token;
+    final auth = t != null && t.isNotEmpty
+        ? "Bearer $t"
+        : "Basic ${base64Encode(utf8.encode('${AuthProvider.username ?? ""}:${AuthProvider.password ?? ""}'))}";
+    return {"Content-Type": "application/json", "Authorization": auth};
+  }
 
-    return {
-      "Content-Type": "application/json",
-      "Authorization": basicAuth,
-    };
+  static String _jwtLog() {
+    final t = AuthProvider.token;
+    if (t == null || t.isEmpty) return '(none)';
+    final preview = t.length > 40 ? '${t.substring(0, 40)}...' : t;
+    return 'Bearer $preview (length: ${t.length})';
   }
 
   static Future<TodayReservations> getTodayReservations(int restaurantId) async {
     final url = Uri.parse("${baseUrl}reservations/today?restaurantId=$restaurantId");
     print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
 
     print("Response status: ${response.statusCode}");
@@ -42,6 +47,7 @@ class DashboardService {
   static Future<TodayReservations> getAllReservations(int restaurantId) async {
     final url = Uri.parse("${baseUrl}reservations/all?restaurantId=$restaurantId");
     print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
 
     print("Response status: ${response.statusCode}");
@@ -58,6 +64,7 @@ class DashboardService {
   static Future<OccupancyData> getCurrentOccupancy(int restaurantId) async {
     final url = Uri.parse("${baseUrl}tables/occupancy?restaurantId=$restaurantId");
     print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
 
     print("Response status: ${response.statusCode}");
@@ -74,6 +81,7 @@ class DashboardService {
   static Future<List<HourlyData>> getHourlyOccupancy(int restaurantId) async {
     final url = Uri.parse("${baseUrl}analytics/hourly?restaurantId=$restaurantId");
     print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
 
     print("Response status: ${response.statusCode}");
@@ -92,7 +100,11 @@ class DashboardService {
 
   static Future<List<TableUsageData>> getTopTables(int restaurantId, {int count = 3, bool leastUsed = false}) async {
     final url = Uri.parse("${baseUrl}analytics/top-tables?restaurantId=$restaurantId&topCount=$count&leastUsed=$leastUsed");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -107,7 +119,11 @@ class DashboardService {
 
   static Future<ReservationsSummary> getReservationsSummary(int restaurantId) async {
     final url = Uri.parse("${baseUrl}analytics/reservations-summary?restaurantId=$restaurantId");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -119,7 +135,11 @@ class DashboardService {
 
   static Future<AverageRating> getAverageRating(int restaurantId) async {
     final url = Uri.parse("${baseUrl}analytics/average-rating?restaurantId=$restaurantId");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -131,7 +151,11 @@ class DashboardService {
 
   static Future<List<WeeklyOccupancyData>> getWeeklyOccupancy(int restaurantId) async {
     final url = Uri.parse("${baseUrl}analytics/weekly-occupancy?restaurantId=$restaurantId");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -156,7 +180,11 @@ class DashboardService {
     }
     
     final url = Uri.parse("${baseUrl}reservations/today/by-state?state=$apiState&restaurantId=$restaurantId");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -185,7 +213,11 @@ class DashboardService {
     }
     
     final url = Uri.parse("${baseUrl}reservations/all/by-state?state=$apiState&restaurantId=$restaurantId");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.get(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -200,7 +232,11 @@ class DashboardService {
 
   static Future<Reservation> confirmReservation(int id) async {
     final url = Uri.parse("${baseUrl}reservations/$id/confirm");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.post(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -212,8 +248,12 @@ class DashboardService {
 
   static Future<Reservation> cancelReservation(int id, {String? reason}) async {
     final url = Uri.parse("${baseUrl}reservations/$id/cancel");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final body = reason != null ? jsonEncode({'reason': reason}) : '{}';
     final response = await http.post(url, headers: _createHeaders(), body: body);
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -225,7 +265,11 @@ class DashboardService {
 
   static Future<Reservation> completeReservation(int id) async {
     final url = Uri.parse("${baseUrl}reservations/$id/complete");
+    print("Requesting: $url");
+    print("JWT: ${_jwtLog()}");
     final response = await http.post(url, headers: _createHeaders());
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

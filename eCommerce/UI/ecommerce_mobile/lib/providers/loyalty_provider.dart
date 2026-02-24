@@ -8,10 +8,11 @@ class LoyaltyProvider {
       const String.fromEnvironment("baseUrl", defaultValue: "http://10.0.2.2:5121/api/");
 
   Map<String, String> _headers() {
-    final username = AuthProvider.username ?? "";
-    final password = AuthProvider.password ?? "";
-    final basicAuth = "Basic ${base64Encode(utf8.encode('$username:$password'))}";
-    return {"Content-Type": "application/json", "Authorization": basicAuth};
+    final t = AuthProvider.token;
+    final auth = t != null && t.isNotEmpty
+        ? "Bearer $t"
+        : "Basic ${base64Encode(utf8.encode('${AuthProvider.username ?? ""}:${AuthProvider.password ?? ""}'))}";
+    return {"Content-Type": "application/json", "Authorization": auth};
   }
 
   Future<LoyaltyPointsResult> getMyPoints() async {

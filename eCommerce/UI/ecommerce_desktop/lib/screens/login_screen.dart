@@ -55,17 +55,24 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (response.statusCode == 200) {
-        final userData = jsonDecode(response.body);
-        final user = User.fromJson(userData);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final token = data['token'] as String?;
+        final userData = data['user'];
+        if (token == null || userData == null) {
+          _showError("Invalid login response.");
+          return;
+        }
+        final user = User.fromJson(userData as Map<String, dynamic>);
         if (!user.isAdmin) {
           _showError(
             "This account does not have access to the desktop app. Only admin users can sign in here.",
           );
           return;
         }
-        AuthProvider.username = username;
-        AuthProvider.password = password;
+        AuthProvider.token = token;
+        AuthProvider.username = user.username;
         AuthProvider.userId = user.id;
+        AuthProvider.password = null;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
