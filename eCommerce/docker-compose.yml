@@ -11,13 +11,26 @@ services:
       - 1433
     networks:
       - ecommerce-2025
-  
+
+  ecommerce-rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - ecommerce-2025
+
   ecommerce-api:
     build:
       context: .
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=ecommerce-sql;Database=eCommerceDb4;User=sa;Password=QWEasd123!;ConnectRetryCount=0;TrustServerCertificate=True
+      - RabbitMQ=host=ecommerce-rabbitmq;username=guest;password=guest
     ports:
       - "5121:5121"
     networks:
@@ -26,6 +39,20 @@ services:
       - ecommerce-sql
     depends_on:
       - ecommerce-sql
+      - ecommerce-rabbitmq
+
+  ecommerce-subscriber:
+    build:
+      context: .
+      dockerfile: eCommerce.Subscriber/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=ecommerce-sql;Database=eCommerceDb4;User=sa;Password=QWEasd123!;ConnectRetryCount=0;TrustServerCertificate=True
+      - RabbitMQ=host=ecommerce-rabbitmq;username=guest;password=guest
+    networks:
+      - ecommerce-2025
+    depends_on:
+      - ecommerce-sql
+      - ecommerce-rabbitmq
 
 networks:
   ecommerce-2025:
