@@ -13,7 +13,7 @@ var config = new ConfigurationBuilder()
     .Build();
 
 var connectionString = config.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Database=rs2RestoBook;Trusted_Connection=True;TrustServerCertificate=True";
+    ?? "Server=localhost;Database=rs2RestoBooktest4;Trusted_Connection=True;TrustServerCertificate=True";
 var rabbitMqConnectionString = config["RabbitMQ"] ?? "host=localhost";
 
 var dbContextOptions = new DbContextOptionsBuilder<eCommerceDbContext>()
@@ -43,8 +43,9 @@ await bus.PubSub.SubscribeAsync<ReservationStatusChangedMessage>(
         await context.SaveChangesAsync();
     });
 
-Console.WriteLine("Subscriber listening for reservation status changes. Press any key to exit.");
-Console.ReadKey();
+Console.WriteLine("Subscriber listening for reservation status changes...");
+
+await Task.Delay(Timeout.Infinite);
 
 static (string Title, string Message) BuildNotificationText(ReservationStatusChangedMessage msg, bool isForAdmin)
 {
